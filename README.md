@@ -6,6 +6,15 @@
 - after pulling this project from GitHub, run `renv::restore()` to synchronize the library with the lockfile
 - see more info here: https://rstudio.github.io/renv/
 
+## storing and retrieving data on AWS S3
+
+- the aws cli must be installed and you must have proper permissions with `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` environment variables set
+- storing data
+    - sync the local working directory with a S3 directory with `aws s3 sync . s3://path/to/remote/folder`
+    - for example sync clead AOD rasters with `aws s3 sync ./aod_clean_rasters s3://geomarker/aod`
+- retrieving data
+    - `aws s3 sync s3://geomarker/aod ./aod_clean_rasters`
+
 ## 1. make h3 grid
 
 - use the [H3 hexagonal hierarchical spatial index](https://eng.uber.com/h3/) to create the grid
