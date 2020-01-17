@@ -146,7 +146,7 @@ dates_we_have <-
   substr(11, 20) %>%
   as.Date()
 
-dates_to_get <- seq.Date(as.Date('2000-01-01'), to = as.Date('2019-12-31'), by = 1)
+dates_to_get <- seq.Date(as.Date('2000-02-24'), to = as.Date('2019-12-31'), by = 1)
 
 {! dates_to_get %in% dates_we_have} %>%
   dates_to_get[.] %>%
