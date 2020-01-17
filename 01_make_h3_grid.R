@@ -1,18 +1,3 @@
-## install h3 following instructions here: https://github.com/crazycapivara/h3-r
-
-## macOS:
-## brew install h3
-
-## debian/ubuntu:
-## git clone https://github.com/uber/h3.git h3c
-## cd h3c
-## git pull origin master --tags
-## git checkout "v3.3.0"
-## cmake -DENABLE_FORMAT=OFF -DBUILD_SHARED_LIBS=ON .
-## sudo make install
-## cd ..
-## rm -rf h3c
-
 library(tidyverse)
 library(h3) # crazycapivara/h3-r
 library(sf)

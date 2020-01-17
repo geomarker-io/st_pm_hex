@@ -1,10 +1,30 @@
-
 ## using `renv` for package management
 
 - `renv` should be installed and activated automatically if starting R from the project root working directory
 - run `renv::snapshot()` to add packages contained within the code to the library (make sure to commit the `renv` project infrastructure, like the `renv.lock` file to the github repository)
 - after pulling this project from GitHub, run `renv::restore()` to synchronize the library with the lockfile
 - see more info here: https://rstudio.github.io/renv/
+
+### `h3` package
+
+The `h3` package might not install properly using "normal" installation code for packages on GitHub because it requires installation of the h3 library ahead of time.  See full instructions here: https://github.com/crazycapivara/h3-r
+
+- install h3 library on macOS with:
+```
+brew install h3
+```
+
+- install h3 library on debian/ubuntu with:
+```
+git clone https://github.com/uber/h3.git h3c
+cd h3c
+git pull origin master --tags
+git checkout "v3.3.0"
+cmake -DENABLE_FORMAT=OFF -DBUILD_SHARED_LIBS=ON .
+sudo make install
+cd ..
+rm -rf h3c
+```
 
 ## storing and retrieving data on AWS S3
 
