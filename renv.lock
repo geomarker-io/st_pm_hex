@@ -124,13 +124,6 @@
       "RemoteSha": "1.1-2",
       "Hash": "e031418365a7f7a766181ab5a41a5716"
     },
-    "RNetCDF": {
-      "Package": "RNetCDF",
-      "Version": "2.1-1",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "8911256303f4a3f862a1f8c36c601424"
-    },
     "Rcpp": {
       "Package": "Rcpp",
       "Version": "1.0.3",
@@ -144,13 +137,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "6230ec41b601066d753475948b3bf4d5"
-    },
-    "abind": {
-      "Package": "abind",
-      "Version": "1.4-5",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "4f57884290cc75ab22f4af9e9d4ca862"
     },
     "askpass": {
       "Package": "askpass",
@@ -723,13 +709,6 @@
       "RemoteSha": "1.7.4",
       "Hash": "796afeea047cda6bdb308d374a33eeb6"
     },
-    "lwgeom": {
-      "Package": "lwgeom",
-      "Version": "0.1-7",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "93537aa398a2fc701bae9b055232a6b5"
-    },
     "magrittr": {
       "Package": "magrittr",
       "Version": "1.5",
@@ -816,12 +795,12 @@
       "RemoteSha": "0.5.0",
       "Hash": "6dfe8bf774944bd5595785e3229d8771"
     },
-    "ncmeta": {
-      "Package": "ncmeta",
-      "Version": "0.2.0",
+    "ncdf4": {
+      "Package": "ncdf4",
+      "Version": "1.17",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "50d26fefde35192e7eb3ffe0c131050d"
+      "Hash": "5c1c0231b12b3d54cf619a3e5e36d229"
     },
     "nlme": {
       "Package": "nlme",
@@ -1054,6 +1033,13 @@
       "Repository": "CRAN",
       "Hash": "a60887cdff80ba8a4b34a624b281b448"
     },
+    "rgeos": {
+      "Package": "rgeos",
+      "Version": "0.5-2",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "dc2f6aa3dcc81a47fee312acd9afa2b0"
+    },
     "rlang": {
       "Package": "rlang",
       "Version": "0.4.2",
@@ -1165,13 +1151,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "803f04b858b8520ac243d38e09741de6"
-    },
-    "stars": {
-      "Package": "stars",
-      "Version": "0.4-0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "bb1851d9c54a100cfc85fc2266051da3"
     },
     "stringi": {
       "Package": "stringi",
@@ -1300,6 +1279,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "c40cfd786b30c20ea9f1247f06a7ee56"
+    },
+    "velox": {
+      "Package": "velox",
+      "Version": "0.2.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "e5fe7b3a61bf28552edb278a9eab3a80"
     },
     "viridis": {
       "Package": "viridis",
