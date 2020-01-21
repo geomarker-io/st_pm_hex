@@ -156,25 +156,37 @@ date_to_composite_raster <- function(the_date = as.Date('2006-08-10')) {
 ## date_to_composite_raster(as.Date('2006-03-29'))
 ## date_to_composite_raster(as.Date('2000-03-01'))
 
-## run all
-## seq.Date(as.Date('2000-01-01'), to = as.Date('2019-12-31'), by = 1) %>%
-##   walk(purrr::safely(date_to_composite_raster, quiet = FALSE))
+## running it all
 
-## run for dates we don't have yet
 dates_we_have <-
   list.files(path = 'aod_clean_rasters') %>%
   substr(11, 20) %>%
   as.Date()
 
-dates_to_get <- seq.Date(as.Date('2000-02-24'), to = as.Date('2019-12-31'), by = 1)
+dates_available <-
+  xml2::read_html('https://e4ftl01.cr.usgs.gov/MOTA/MCD19A2.006/') %>%
+  rvest::html_nodes('a') %>%
+  rvest::html_attr('href') %>%
+  str_extract(regex('[0-9]{4}.[0-9]{2}.[0-9]{2}')) %>%
+  na.omit() %>%
+  as.Date(format = '%Y.%m.%d')
 
+dates_we_want <- seq.Date(as.Date('2000-01-01'), to = as.Date('2019-12-31'), by = 1) # 7,305 in total
+
+dates_to_get <-
+  dates_we_want %in% dates_available %>%
+  dates_we_want[.]
+
+## make dummy files for dates that we can't get because they don't exist
+{! dates_we_want %in% dates_available} %>%
+  dates_we_want[.] %>%
+  walk(~ file.create(paste0('aod_clean_rasters/aod_clean_', ., '.dummy')))
+
+## run it
 {! dates_to_get %in% dates_we_have} %>%
   dates_to_get[.] %>%
   rev() %>%
   walk(purrr::possibly(date_to_composite_raster, otherwise = NULL, quiet = FALSE))
-
-## 2003-04-13 error: cannot coerce raster to...
-## 2003-04-10 error: missing value where TRUE/FALSE needed
 
 ## write out all rasters as one raster brick per year
 
