@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "3.6.1",
+    "Version": "3.6.2",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -11,15 +11,10 @@
   "Packages": {
     "BH": {
       "Package": "BH",
-      "Version": "1.69.0-1",
-      "Source": "CRAN",
+      "Version": "1.72.0-3",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "RemoteType": "standard",
-      "RemoteRef": "BH",
-      "RemoteRepos": "https://cran.rstudio.com/",
-      "RemotePkgType": "source",
-      "RemoteSha": "1.69.0-1",
-      "Hash": "f4605d46264b35f53072fc9ee7ace15f"
+      "Hash": "8f9ce74c6417d61f0782cbae5fd2b7b0"
     },
     "CB": {
       "Package": "CB",
@@ -36,10 +31,10 @@
     },
     "DBI": {
       "Package": "DBI",
-      "Version": "1.0.0",
+      "Version": "1.1.0",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "7bc8be0e425da29fe0e10f792bdbb74b"
+      "Hash": "4744be45519d675af66c28478720fce5"
     },
     "DT": {
       "Package": "DT",
@@ -62,15 +57,10 @@
     },
     "MASS": {
       "Package": "MASS",
-      "Version": "7.3-51.4",
-      "Source": "CRAN",
+      "Version": "7.3-51.5",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "RemoteType": "standard",
-      "RemoteRef": "MASS",
-      "RemoteRepos": "https://cran.rstudio.com/",
-      "RemotePkgType": "source",
-      "RemoteSha": "7.3-51.4",
-      "Hash": "a94714e63996bc284b8795ec50defc07"
+      "Hash": "9efe80472b21189ebab1b74169808c26"
     },
     "Matrix": {
       "Package": "Matrix",
@@ -250,13 +240,8 @@
     "codetools": {
       "Package": "codetools",
       "Version": "0.2-16",
-      "Source": "CRAN",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "RemoteType": "standard",
-      "RemoteRef": "codetools",
-      "RemoteRepos": "https://cran.rstudio.com/",
-      "RemotePkgType": "source",
-      "RemoteSha": "0.2-16",
       "Hash": "89cf4b8207269ccf82fbeb6473fd662b"
     },
     "colorspace": {
@@ -418,10 +403,10 @@
     },
     "gdalUtils": {
       "Package": "gdalUtils",
-      "Version": "2.0.1.14",
+      "Version": "2.0.3",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "c8cd74753ff4907b1df737b9749380f2"
+      "Hash": "a48a701bc4cac8e64d98abffa4e83497"
     },
     "gdtools": {
       "Package": "gdtools",
@@ -482,15 +467,15 @@
     },
     "h3": {
       "Package": "h3",
-      "Version": "3.3.1",
+      "Version": "3.3.2",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteUsername": "crazycapivara",
       "RemoteRepo": "h3-r",
       "RemoteRef": "master",
-      "RemoteSha": "085996e22f6ae05f6b4048b2474d2fd4e964a697",
-      "Hash": "382523a876182ae8c278a25836165cad"
+      "RemoteSha": "d9ed303cfe88b67414bd5103a5c335bef8286016",
+      "Hash": "09dc8ba1da6c768f39add72913f52c01"
     },
     "haven": {
       "Package": "haven",
@@ -993,14 +978,9 @@
     "renv": {
       "Package": "renv",
       "Version": "0.9.2-20",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteUsername": "rstudio",
-      "RemoteRepo": "renv",
-      "RemoteRef": "master",
-      "RemoteSha": "21fa2183fe0c617e99074b6deab4b1505a7412cf",
-      "Hash": "61fec6f88b6a50f5aee427cf71c4ce8d"
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0bcd5700036d80eb62e0d3c84f5e5fd1"
     },
     "reprex": {
       "Package": "reprex",
