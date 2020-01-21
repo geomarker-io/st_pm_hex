@@ -43,6 +43,10 @@ get_tile_urls <- function(Date) {
   lns <- lns[! str_detect(lns, fixed('.xml'))]
   lns <- map(tiles_to_get, ~ lns[str_detect(lns, fixed(.))]) %>%
     unlist()
+  if (length(lns) == 0) {
+    message('no selected tiles available for ', Date)
+    return(NULL)
+  }
   return(paste0(MCD_url, lns))
 }
 
@@ -127,13 +131,29 @@ tile_to_raster <- function(tile_url) {
 date_to_composite_raster <- function(the_date = as.Date('2006-08-10')) {
   message('now processing: ', the_date)
   dir.create('./aod_clean_rasters', showWarnings = FALSE)
-  d_tmp <- CB::mappp(get_tile_urls(Date = the_date), tile_to_raster, parallel = TRUE)
-  do.call(raster::merge, d_tmp[! is.na(d_tmp)]) %>%
+  tile_urls <- get_tile_urls(Date = the_date)
+  ## create a dummy file if no tiles are available
+  if (length(tile_urls) == 0) {
+    file.create(paste0('aod_clean_rasters/aod_clean_', the_date, '.dummy'))
+    return(NULL)
+  }
+  d_tmp <- CB::mappp(tile_urls, tile_to_raster, parallel = TRUE)
+  ## remove any missing rasters from the list
+  d_tmp <- d_tmp[! is.na(d_tmp)]
+  ## remove any rasters with all missing values
+  all_missings <- map_lgl(d_tmp, ~ all(is.na(raster::getValues(.))))
+  d_tmp <- d_tmp[!all_missings]
+  if (length(d_tmp) == 0) {
+    message('no non-missing values present for ', the_date)
+    file.create(paste0('aod_clean_rasters/aod_clean_', the_date, '.dummy'))
+    return(NULL)
+  }
+  do.call(raster::merge, d_tmp) %>%
     raster::writeRaster(paste0('aod_clean_rasters/aod_clean_', the_date, '.tif'))
 }
 
-## date_to_composite_raster(as.Date('2006-08-10'))
-## date_to_composite_raster(as.Date('2003-04-13'))
+## date_to_composite_raster(as.Date('2000-03-15'))
+## date_to_composite_raster(as.Date('2006-03-29'))
 ## date_to_composite_raster(as.Date('2000-03-01'))
 
 ## run all
