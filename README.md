@@ -31,7 +31,7 @@ rm -rf h3c
 - the aws cli must be installed and you must have proper permissions with `AWS_SECRET_ACCESS_KEY` and `AWS_ACCESS_KEY_ID` environment variables set
 - storing data
     - sync the local working directory with a S3 directory with `aws s3 sync . s3://path/to/remote/folder`
-    - for example sync clead AOD rasters with `aws s3 sync ./aod_clean_rasters s3://geomarker/aod`
+    - for example sync clean AOD rasters with `aws s3 sync ./aod_clean_rasters s3://geomarker/aod`
 - retrieving data
     - `aws s3 sync s3://geomarker/aod ./aod_clean_rasters`
 
@@ -68,7 +68,7 @@ d <-
 
 ## 2. get AQS data
 
-- average by date for colocated stations (5,032,639 total rows, but only 3,347,073 total unique station/lat/lon/date combinations)
+- average by date for co-located stations (5,032,639 total rows, but only 3,347,073 total unique station/lat/lon/date combinations)
 - saved locally as `data_aqs_pm25.rds`
 
 ## 3. get NARR data
@@ -80,6 +80,36 @@ d <-
 - [MCD19A2: MODIS/Terra and Aqua MAIAC Land AOD Daily L2G 1km SIN Grid V006](https://lpdaac.usgs.gov/products/mcd19a2v006/)
 - [MCD19A2 User Guide](https://lpdaac.usgs.gov/documents/110/MCD19_User_Guide_V6.pdf)
 - cleaned AOD rasters are stored at [s3://geomarker/aod/](https://geomarker.s3.us-east-2.amazonaws.com/aod)
+
+### Running It
+
+- repetitively run the script until all rasters are on disk
+- getting a cleaned AOD raster often fails because of download failure
+- sometimes, none of the desired tiles are available for download at all or all of the downloaded tiles don't have any quality, non-missing AOD measurements
+- in these cases, the script will make a "dummy" file so that the date will be marked as "completed"
+
+For example, create a wrapper bash script to run the script every minute if it isn't already running:
+
+- create `run_it.sh`:
+
+```sh
+#!/bin/bash
+
+cd /home/cole/st_pm_hex
+rm qa_MCD19A2.A*
+rm MCD19A2.A*
+rm aod_MCD19A2.A*
+/usr/bin/Rscript ./04_get_modis_data.R
+```
+
+- then setup a cron job (`crontab -e`) to run every minute if it isn't already running:
+
+```sh
+*/1 * * * * /usr/bin/flock -n /tmp/fcj.lockfile /home/cole/st_pm_hex/run_it.sh
+```
+
+- check how many dates are completed with `ll aod_clean_rasters/ | wc -l`
+- sync to S3 drive with `aws s3 sync ./aod_clean_rasters s3://geomarker/aod`
 
 ## ?? get GFED data
 
