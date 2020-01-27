@@ -74,6 +74,7 @@ d <-
 ## 3. get NARR data
 
 - [NARR](https://www.esrl.noaa.gov/psd/data/gridded/data.narr.html) data details
+- each different NARR observation type (hpbl, precip, etc.) is in a RDS file with h3 id and date; stored at [s3://geomarker/st_pm_hex/](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex) (i.e., `data_narr_hpbl_h3.rds`, `data_narr_precip_h3.rds`, etc.)
 
 ## 4. get MODIS data
 

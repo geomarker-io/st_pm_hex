@@ -13,12 +13,9 @@ d <-
             as_tibble(h3::h3_to_geo(d_hex))) %>%
   st_as_sf(coords = c('lng', 'lat'), crs = 4326)
 
-## transform points into CRS of raster (but only do this once since it takes awhile)
+## transform points into CRS of raster
 d_for_extract <- d %>%
   sf::st_transform("+proj=lcc +x_0=5632642.22547 +y_0=4612545.65137 +lat_0=50 +lon_0=-107 +lat_1=50 +ellps=GRS80")
-
-# saveRDS(d_for_extract, 'd_hex_sf_points_in_NARR_projection.rds')
-# d_for_extract <- readRDS('d_hex_sf_points_in_NARR_projection.rds')
 
 #### get NARR raster cell numbers for each h3 centroid point
 
