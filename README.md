@@ -69,7 +69,7 @@ d <-
 ## 2. get AQS data
 
 - average by date for co-located stations (5,032,639 total rows, but only 3,347,073 total unique station/lat/lon/date combinations)
-- saved locally as `data_aqs_pm25.rds`
+- saved remotely as [s3://geomarker/st_pm_hex/data_aqs_pm25.rds](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/data_aqs_pm25.rds)
 
 ## 3. get NARR data
 
