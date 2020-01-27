@@ -1013,13 +1013,6 @@
       "Repository": "CRAN",
       "Hash": "a60887cdff80ba8a4b34a624b281b448"
     },
-    "rgeos": {
-      "Package": "rgeos",
-      "Version": "0.5-2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "dc2f6aa3dcc81a47fee312acd9afa2b0"
-    },
     "rlang": {
       "Package": "rlang",
       "Version": "0.4.2",
@@ -1259,13 +1252,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "c40cfd786b30c20ea9f1247f06a7ee56"
-    },
-    "velox": {
-      "Package": "velox",
-      "Version": "0.2.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "e5fe7b3a61bf28552edb278a9eab3a80"
     },
     "viridis": {
       "Package": "viridis",
