@@ -36,10 +36,14 @@ d <- st_drop_geometry(d)
 # nest so we have less values duplicated across hex values in the same NARR grid
 d <- d %>% nest(h3 = c(h3))
 
-## saveRDS(d, 'd_hex_with_NARR_cell_numbers.rds')
-## d <- readRDS('d_hex_with_NARR_cell_numbers.rds')
+# use a compact representation of h3 cells??
+## d <- d %>% mutate(h3_compact = CB::mappp(h3, ~ h3::compact(unlist(.))))
 
-#### extract NARR raster cell values
+# save this for future linkage
+saveRDS(d, 'd_hex_with_NARR_cell_numbers.rds')
+d <- readRDS('d_hex_with_NARR_cell_numbers.rds')
+
+#### function to extract NARR raster cell values in long format as tbl for one year
 
 get_NARR_values <- function(data.name, year) {
 
@@ -48,7 +52,7 @@ get_NARR_values <- function(data.name, year) {
                data.name,'.',
                year,'.nc')
   ff.short <- basename(ff)
-  download.file(ff, destfile = ff.short)
+  download.file(ff, destfile = ff.short, quiet = TRUE)
   on.exit(unlink(ff.short))
 
   d_narr <- raster::brick(ff.short)
@@ -59,19 +63,26 @@ get_NARR_values <- function(data.name, year) {
 
   d_narr_tbl_long <-
     bind_cols(d, d_narr_tbl) %>%
-    select(-narr_cell) %>%
-    pivot_longer(cols = -h3, names_to = 'date', values_to = data.name) %>%
+    select(-h3) %>%
+    pivot_longer(cols = -narr_cell, names_to = 'date', values_to = data.name) %>%
     mutate(date = as.Date(date, format = 'X%Y.%m.%d.'))
 
   return(d_narr_tbl_long)
 
 }
 
-get_NARR_values('hpbl', '2000')
+## get_NARR_values('hpbl', '2000')
 
-for (dn in c('hpbl', 'vis', 'rhum.2m', 'prate', 'air.2m',
-              'pres.sfc', 'uwnd.10m', 'vwnd.10m')) {
-                message('#### \n\n\n now processing ', dn, '\n\n\n####')
-                map_dfr(as.character(2000:2019), ~ get_NARR_values(data.name = dn, year = .)) %>%
-                  saveRDS(paste0('data_narr_', dn, '_h3.rds'))
-                }
+## save all years of each weather variable on disk
+save_all_NARR_years <- function(dn) {
+  narr_all_years <-
+    map(as.character(2000:2019), ~ get_NARR_values(data.name = dn, year = .)) %>%
+    bind_rows()
+
+  qs::qsave(narr_all_years, paste0('data_narr_', dn, '_h3.qs'), nthreads = parallel::detectCores())
+  # or?
+  fst::write.fst(narr_all_years, paste0('data_narr_', dn, '_h3.fst'))
+}
+
+walk(c('hpbl', 'vis', 'rhum.2m', 'prate', 'air.2m', 'pres.sfc', 'uwnd.10m', 'vwnd.10m'),
+     save_all_NARR_years)
