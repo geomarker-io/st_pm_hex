@@ -78,11 +78,18 @@ save_all_NARR_years <- function(dn) {
   narr_all_years <-
     map(as.character(2000:2019), ~ get_NARR_values(data.name = dn, year = .)) %>%
     bind_rows()
-
-  qs::qsave(narr_all_years, paste0('data_narr_', dn, '_h3.qs'), nthreads = parallel::detectCores())
-  # or?
-  fst::write.fst(narr_all_years, paste0('data_narr_', dn, '_h3.fst'))
+  qs::qsave(narr_all_years, glue::glue('./narr/narr_{dn}.qs'), nthreads = parallel::detectCores())
 }
 
-walk(c('hpbl', 'vis', 'rhum.2m', 'prate', 'air.2m', 'pres.sfc', 'uwnd.10m', 'vwnd.10m'),
-     save_all_NARR_years)
+nms <- c('hpbl', 'vis', 'rhum.2m', 'prate', 'air.2m', 'pres.sfc', 'uwnd.10m', 'vwnd.10m')
+
+walk(nms, save_all_NARR_years)
+
+### ???
+## read in all NARR qs files and join them to one large fst file so that we can do row/column lookups
+
+## d_narr_all <- map(glue::glue('narr/narr_{nms}.qs'), qs::qread)
+
+## d_out <- reduce(c(list(d), d_narr_all), left_join)
+
+## fst::save_fst(d_out, 'narr.fst')

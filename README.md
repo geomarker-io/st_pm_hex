@@ -75,7 +75,7 @@ d <-
 
 - [NARR](https://www.esrl.noaa.gov/psd/data/gridded/data.narr.html) data details
 - crosswalk between h3 cell and NARR cell is stored in RDS object at [s3://geomarker/st_pm_hex/d_hex_with_NARR_cell_numbers.rds](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/d_hex_with_NARR_cell_numbers.rds)
-- each different NARR observation type (hpbl, precip, etc.) is in a RDS file with NARR id and date; stored at [s3://geomarker/st_pm_hex/](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex) (i.e., `data_narr_hpbl_h3.rds`, `data_narr_precip_h3.rds`, etc.)
+- each different NARR observation type (hpbl, precip, etc.) is in a `.qs` file with NARR cell number and date; stored at [s3://geomarker/st_pm_hex/narr](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/narr) (i.e., `narr/narr_hpbl_h3.qs`, `narr/narr_precip_h3.qs`, etc.)
 - we still need to use the crosswalk to read in the desired NARR data files when harmonizing to the hex grid
 
 ## 4. get MODIS data
