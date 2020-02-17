@@ -5,7 +5,7 @@ library(mapview)
 
 us_boundary <-
   USAboundaries::us_boundaries() %>%
-  filter(!state_name %in% c('Alaska', 'Hawaii', 'Puerto Rico')) %>%
+  filter(!state_name %in% c("Alaska", "Hawaii", "Puerto Rico")) %>%
   st_union() %>%
   st_as_sf() %>%
   st_transform(5072)
@@ -31,15 +31,19 @@ us_h3_8 <-
   unlist()
 
 ## save them using the compact ids since its cheaper to recreate the finer resolution than reading in the full list of h3_8 ids
-saveRDS(h3::compact(us_h3_8), 'us_h3_8_compact_hex_ids.rds')
+saveRDS(h3::compact(us_h3_8), "us_h3_8_compact_hex_ids.rds")
 
 #### example map for cincy area ####
 
 cincy_4 <- geo_to_h3(c(39.14, -84.51), 4)
 
-map(8:5,
-    ~ mapview(h3_to_geo_boundary_sf(h3_to_children(cincy_4, .)),
-              layer.name = as.character(.))) %>%
-  {Reduce(`+`, .)} %>%
-  mapshot(url = 'h3_cincy_example_map.html')
-
+map(
+  8:5,
+  ~ mapview(h3_to_geo_boundary_sf(h3_to_children(cincy_4, .)),
+    layer.name = as.character(.)
+  )
+) %>%
+  {
+    Reduce(`+`, .)
+  } %>%
+  mapshot(url = "h3_cincy_example_map.html")
