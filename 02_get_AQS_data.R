@@ -32,3 +32,9 @@ d <- sf::st_as_sf(d, coords = c("lon", "lat"), crs = 4326)
 d$h3 <- h3::geo_to_h3(d, res = 8)
 
 saveRDS(d, "data_aqs_pm25.rds")
+
+# save h3 and dates that we need for training data
+d %>%
+  st_drop_geometry() %>%
+  select(date, pm25, h3) %>%
+  qs::qsave("h3data_aqs.qs")

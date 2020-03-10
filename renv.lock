@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "3.6.1",
+    "Version": "3.6.3",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -333,6 +333,13 @@
       "Repository": "CRAN",
       "Hash": "0e26be4558dbbc713d7cfe4a4c361f38"
     },
+    "fst": {
+      "Package": "fst",
+      "Version": "0.9.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "2df24a7550557e3564a83c39cc70a585"
+    },
     "gdalUtils": {
       "Package": "gdalUtils",
       "Version": "2.0.3",
@@ -563,6 +570,18 @@
       "Repository": "CRAN",
       "Hash": "1bb58822a20301cee84a41678e25d9b7"
     },
+    "mappp": {
+      "Package": "mappp",
+      "Version": "0.2",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "cole-brokamp",
+      "RemoteRepo": "mappp",
+      "RemoteRef": "master",
+      "RemoteSha": "685198b0043ffde05170260ea8761db8ea71fb7e",
+      "Hash": "1d5689d43a3ad461c440d7f34a00b238"
+    },
     "mapview": {
       "Package": "mapview",
       "Version": "2.7.0",
@@ -756,10 +775,10 @@
     },
     "qs": {
       "Package": "qs",
-      "Version": "0.20.2",
+      "Version": "0.21.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "24ecf7fdf53727c87a58b99cbd6999aa"
+      "Hash": "0026897f413d8f046417effe5308f473"
     },
     "raster": {
       "Package": "raster",
@@ -791,10 +810,10 @@
     },
     "renv": {
       "Package": "renv",
-      "Version": "0.9.2-20",
+      "Version": "0.9.3",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "0bcd5700036d80eb62e0d3c84f5e5fd1"
+      "Hash": "c1a367437d8a8a44bec4b9d4974cb20c"
     },
     "reprex": {
       "Package": "reprex",

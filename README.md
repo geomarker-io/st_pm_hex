@@ -69,22 +69,31 @@ d <-
 ## 2. get AQS data
 
 - average by date for co-located stations (5,032,639 total rows, but only 3,347,073 total unique station/lat/lon/date combinations)
-- saved remotely as [s3://geomarker/st_pm_hex/data_aqs_pm25.rds](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/data_aqs_pm25.rds)
+- training only data saved `s3://geomarker/st_pm_hex/h3data_aqs.qs`
+- this also serves as the dataset tracking which h3-date combinations are needed for the training dataset
 
-## 3. get NARR data
+## 3. get NLCD data
+
+- National Land Cover Database information is taken from the [geomarker-io/nlcd_raster_to_fst](https://github.com/geomarker-io/nlcd_raster_to_fst) repository that uses `.fst` files to speed up extraction and summary for polygons
+- the functions to extract from fst files are replicated locally from that repository, although the code here is specialized for the hexagon cells
+- training data only saved as `s3://geomarker/st_pm_hex/h3data_nlcd.qs`
+
+## 4. get NARR data
 
 - [NARR](https://www.esrl.noaa.gov/psd/data/gridded/data.narr.html) data details
-- crosswalk between h3 cell and NARR cell is stored in RDS object at [s3://geomarker/st_pm_hex/d_hex_with_NARR_cell_numbers.rds](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/d_hex_with_NARR_cell_numbers.rds)
-- each different NARR observation type (hpbl, precip, etc.) is in a `.qs` file with NARR cell number and date; stored at [s3://geomarker/st_pm_hex/narr](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/narr) (i.e., `narr/narr_hpbl_h3.qs`, `narr/narr_precip_h3.qs`, etc.)
-- we still need to use the crosswalk to read in the desired NARR data files when harmonizing to the hex grid
+- [geomarker-io/nlcd_raster_to_fst](https://github.com/geomarker-io/nlcd_raster_to_fst) repository that uses a `.fst` file to speed up extraction for points is used, although the code here is specialized for the hexagon cells
+- training data only saved as `s3://geomarker/st_pm_hex/h3data_narr.qs`
 
-## 4. get MODIS data
+- crosswalk between h3 cell and NARR cell is stored in RDS object at [s3://geomarker/st_pm_hex/d_hex_with_NARR_cell_numbers.rds](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/d_hex_with_NARR_cell_numbers.rds)
+
+
+## 5. get MODIS data
 
 - [MCD19A2: MODIS/Terra and Aqua MAIAC Land AOD Daily L2G 1km SIN Grid V006](https://lpdaac.usgs.gov/products/mcd19a2v006/)
 - [MCD19A2 User Guide](https://lpdaac.usgs.gov/documents/110/MCD19_User_Guide_V6.pdf)
 - cleaned AOD rasters are stored at [s3://geomarker/aod/](https://geomarker.s3.us-east-2.amazonaws.com/aod)
 
-### Running It
+### Running To Get All Clean Rasters
 
 - repetitively run the script until all rasters are on disk
 - getting a cleaned AOD raster often fails because of download failure
@@ -114,6 +123,8 @@ rm aod_MCD19A2.A*
 - check how many dates are completed with `ll aod_clean_rasters/ | wc -l`
 - sync to S3 drive with `aws s3 sync ./aod_clean_rasters s3://geomarker/aod`
 
+### Extracting Only AOD Needed for Training
+
 ## ?? get GFED data
 
 - [GFED](https://www.geo.vu.nl/~gwerf/GFED/GFED4/) is the Global Fire Emissions Database
@@ -132,8 +143,11 @@ rm aod_MCD19A2.A*
   - [scc](https://ofmpub.epa.gov/sccwebservices/sccsearch/) is a code which defines the type of emissions
   - includes aircraft, other non-point sources
   - county = "Multiple (portable facilities)" is for non-point sources averaged over a whole county; use `fips code` in this case?
+  
+## predicting for all h3-dates
 
-
+- create function for prediction of all dates for one grid to write to a file
+  
 ## notes for later lookup using h3
 
 ```r
