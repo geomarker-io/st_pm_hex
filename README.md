@@ -81,11 +81,8 @@ d <-
 ## 4. get NARR data
 
 - [NARR](https://www.esrl.noaa.gov/psd/data/gridded/data.narr.html) data details
-- [geomarker-io/nlcd_raster_to_fst](https://github.com/geomarker-io/nlcd_raster_to_fst) repository that uses a `.fst` file to speed up extraction for points is used, although the code here is specialized for the hexagon cells
+- [geomarker-io/nlcd_raster_to_fst](https://github.com/geomarker-io/nlcd_raster_to_fst) repository that uses a `.fst` file to speed up extraction for points is used, although the code here is specialized for the hexagon centroids
 - training data only saved as `s3://geomarker/st_pm_hex/h3data_narr.qs`
-
-- crosswalk between h3 cell and NARR cell is stored in RDS object at [s3://geomarker/st_pm_hex/d_hex_with_NARR_cell_numbers.rds](https://geomarker.s3.us-east-2.amazonaws.com/st_pm_hex/d_hex_with_NARR_cell_numbers.rds)
-
 
 ## 5. get MODIS data
 
@@ -125,6 +122,8 @@ rm aod_MCD19A2.A*
 
 ### Extracting Only AOD Needed for Training
 
+- use `05_make_MODIS_data.R` to extract MODIS data from rasters to the training data
+
 ## ?? get GFED data
 
 - [GFED](https://www.geo.vu.nl/~gwerf/GFED/GFED4/) is the Global Fire Emissions Database
@@ -147,12 +146,3 @@ rm aod_MCD19A2.A*
 ## predicting for all h3-dates
 
 - create function for prediction of all dates for one grid to write to a file
-  
-## notes for later lookup using h3
-
-```r
-## geo_to_h3 takes an sf object
-h3::geo_to_h3(sf_object, res = 8)
-
-h3::h3_to_geo_boundary_sf()
-```

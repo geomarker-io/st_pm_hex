@@ -249,6 +249,13 @@
       "Repository": "CRAN",
       "Hash": "ec0bde6776afca14b9ec1e3e0735a846"
     },
+    "data.table": {
+      "Package": "data.table",
+      "Version": "1.12.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "cd711af60c47207a776213a368626369"
+    },
     "dbplyr": {
       "Package": "dbplyr",
       "Version": "1.4.2",
@@ -640,13 +647,6 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "6dfe8bf774944bd5595785e3229d8771"
-    },
-    "ncdf4": {
-      "Package": "ncdf4",
-      "Version": "1.17",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "5c1c0231b12b3d54cf619a3e5e36d229"
     },
     "nlme": {
       "Package": "nlme",
