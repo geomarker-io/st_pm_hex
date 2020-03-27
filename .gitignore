@@ -1,3 +1,4 @@
 *.nc
 /d_hex_sf_points_in_NARR_projection.rds
 /d_hex_with_NARR_cell_numbers.rds
+*.qs

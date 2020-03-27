@@ -1,3 +1,7 @@
+# st_pm_hex
+
+> a nationwide spatiotemporal PM2.5 exposure assessment model
+
 ## using `renv` for package management
 
 - `renv` should be installed and activated automatically if starting R from the project root working directory
@@ -38,8 +42,9 @@ rm -rf h3c
 ## 1. make h3 grid
 
 - use the [H3 hexagonal hierarchical spatial index](https://eng.uber.com/h3/) to create the grid
-    - average area of an h3 hexagon at a precision of 8 is 0.7373 sq km
+    - average area of an h3 hexagon at a precision of 8 is 0.74 sq km
     - average length of an h3 hexagon side at a precision of 8 is 0.4614 km
+    - actual resolution of modis grid is 926 by 926 m = 0.86 sq km
     - there are 11,932,970 unique valid H3 indexes at this resolution that we use to cover the contiguous US
     - each hash is made up of 15 total characters; for the precision of 8, the first characteristics 10 are used and the last 5 are "filler" f's (values can be 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f)
 - see the [example cincinnati map](h3_cincy_example_map.html) for an example of the hierarchical h3 layout
@@ -71,6 +76,8 @@ d <-
 - average by date for co-located stations (5,032,639 total rows, but only 3,347,073 total unique station/lat/lon/date combinations)
 - training only data saved `s3://geomarker/st_pm_hex/h3data_aqs.qs`
 - this also serves as the dataset tracking which h3-date combinations are needed for the training dataset
+
+- TODO subset to contiguous united states (this is already done for AOD, but won't be if we use all aqs data as training points...)
 
 ## 3. get NLCD data
 
@@ -120,9 +127,11 @@ rm aod_MCD19A2.A*
 - check how many dates are completed with `ll aod_clean_rasters/ | wc -l`
 - sync to S3 drive with `aws s3 sync ./aod_clean_rasters s3://geomarker/aod`
 
-### Extracting Only AOD Needed for Training
 
-- use `05_make_MODIS_data.R` to extract MODIS data from rasters to the training data
+## 6. geohash AOD data
+
+- use `06_make_AOD_data.R` to extract all non-missing AOD data from folder of rasters as a data.table fst file keyed on h3 and date
+- `h3data_aod.fst` (saved as `s3://geomarker/st_pm_hex/aod.fst`) takes up 6.9 GB in RAM and 1.1 GB on disk
 
 ## ?? get GFED data
 
@@ -134,7 +143,7 @@ rm aod_MCD19A2.A*
   - https://doi.org/10.5194/gmd-4-625-2011
   - http://bai.acom.ucar.edu/Data/fire/data/FINNv1.5_2017.GEOSCHEM.tar.gz
 
-## get NEI data
+## ?? get NEI data
 
 - [NEI](https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei) is the National Emissions Inventory Database
   - point data available in 2008, 2011, 2014, 2017
@@ -142,6 +151,12 @@ rm aod_MCD19A2.A*
   - [scc](https://ofmpub.epa.gov/sccwebservices/sccsearch/) is a code which defines the type of emissions
   - includes aircraft, other non-point sources
   - county = "Multiple (portable facilities)" is for non-point sources averaged over a whole county; use `fips code` in this case?
+
+## create training data
+
+- merge in all columns based on pm2.5 observations
+- create year, day of year columns,
+- include x and y coordinates for geohashes
   
 ## predicting for all h3-dates
 
