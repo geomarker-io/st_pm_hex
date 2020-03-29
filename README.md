@@ -1,6 +1,6 @@
 # st_pm_hex
 
-> a nationwide spatiotemporal PM2.5 exposure assessment model
+> a spatiotemporal PM2.5 exposure assessment model for the contiguous US
 
 ## using `renv` for package management
 
@@ -152,11 +152,16 @@ rm aod_MCD19A2.A*
   - includes aircraft, other non-point sources
   - county = "Multiple (portable facilities)" is for non-point sources averaged over a whole county; use `fips code` in this case?
 
-## create training data
+## make training data
 
 - merge in all columns based on pm2.5 observations
-- create year, day of year columns,
-- include x and y coordinates for geohashes
+- create year, day of year, and day of week columns
+- include x and y coordinates (in epsg 5072) for geohashes
+- total of 3,221,123 rows and 32 columns (2 of which are not used for training: `h3` and `date`)
+- 10,090 (0.3%) of grid-days with pm25 had non-missing aod data
+- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (787 MB in RAM, 109 MB on disk)
+
+## train pred model
   
 ## predicting for all h3-dates
 
