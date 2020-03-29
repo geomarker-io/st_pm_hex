@@ -21,7 +21,7 @@ convert_aod_to_geohash <- function(date) {
     st_transform(4326)
   d_out <- tibble(
     date = date,
-    h3 = h3::geo_to_h3(r_sf),
+    h3 = h3::geo_to_h3(r_sf, res = 8),
     aod = r_sf$aod
   )
   dir.create("./aod_fst", showWarnings = FALSE)
