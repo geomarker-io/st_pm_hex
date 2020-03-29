@@ -45,3 +45,5 @@ d_out <- bind_rows(d[!is.na(d)])
 d_out <- data.table::data.table(d_out, key = c("h3", "date"))
 
 fst::write_fst(d_out, "h3data_aod.fst", compress = 100)
+
+system("aws s3 cp h3data_aod.fst s3://geomarker/st_pm_hex/h3data_aod.fst")

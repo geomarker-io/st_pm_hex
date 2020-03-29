@@ -223,6 +223,7 @@ d <- d %>% select(-nlcd_year)
 
 # save
 qs::qsave(d, "h3data_nlcd.qs")
+system("aws s3 cp h3data_nlcd.qs s3://geomarker/st_pm_hex/h3data_nlcd.qs")
 
 
 

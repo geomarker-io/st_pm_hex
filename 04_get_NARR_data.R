@@ -68,3 +68,5 @@ d_out <- left_join(d, d_narr, by = c("narr_cell", "date"))
 d_out %>%
   select(-narr_cell) %>%
   qs::qsave("./h3data_narr.qs")
+
+system("aws s3 cp h3data_narr.qs s3://geomarker/st_pm_hex/h3data_narr.qs")
