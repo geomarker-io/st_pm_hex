@@ -2,6 +2,10 @@
 
 > a spatiotemporal PM2.5 exposure assessment model for the contiguous US
 
+## computational workflow
+
+![](st_pm_hex_computing.png)
+
 ## using `renv` for package management
 
 - `renv` should be installed and activated automatically if starting R from the project root working directory
@@ -133,6 +137,15 @@ rm aod_MCD19A2.A*
 - use `06_make_AOD_data.R` to extract all non-missing AOD data from folder of rasters as a data.table fst file keyed on h3 and date
 - `h3data_aod.fst` (saved as `s3://geomarker/st_pm_hex/aod.fst`) takes up 6.9 GB in RAM and 1.1 GB on disk
 
+## ?? get NEI data
+
+- [NEI](https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei) is the National Emissions Inventory Database
+  - point data available in 2008, 2011, 2014, 2017
+- NEI has more than industrial emissions data
+  - [scc](https://ofmpub.epa.gov/sccwebservices/sccsearch/) is a code which defines the type of emissions
+  - includes aircraft, other non-point sources
+  - county = "Multiple (portable facilities)" is for non-point sources averaged over a whole county; use `fips code` in this case?
+
 ## ?? get GFED data
 
 - [GFED](https://www.geo.vu.nl/~gwerf/GFED/GFED4/) is the Global Fire Emissions Database
@@ -142,15 +155,6 @@ rm aod_MCD19A2.A*
 - [FINN](https://www2.acom.ucar.edu/modeling/finn-fire-inventory-ncar) is the Fire Emissions from NCAR database
   - https://doi.org/10.5194/gmd-4-625-2011
   - http://bai.acom.ucar.edu/Data/fire/data/FINNv1.5_2017.GEOSCHEM.tar.gz
-
-## ?? get NEI data
-
-- [NEI](https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei) is the National Emissions Inventory Database
-  - point data available in 2008, 2011, 2014, 2017
-- NEI has more than industrial emissions data
-  - [scc](https://ofmpub.epa.gov/sccwebservices/sccsearch/) is a code which defines the type of emissions
-  - includes aircraft, other non-point sources
-  - county = "Multiple (portable facilities)" is for non-point sources averaged over a whole county; use `fips code` in this case?
 
 ## make training data
 
