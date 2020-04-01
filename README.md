@@ -137,14 +137,18 @@ rm aod_MCD19A2.A*
 - use `06_make_AOD_data.R` to extract all non-missing AOD data from folder of rasters as a data.table fst file keyed on h3 and date
 - `h3data_aod.fst` (saved as `s3://geomarker/st_pm_hex/aod.fst`) takes up 6.9 GB in RAM and 1.1 GB on disk
 
-## ?? get NEI data
+## 7. get NEI data
 
 - [NEI](https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei) is the National Emissions Inventory Database
-  - point data available in 2008, 2011, 2014, 2017
-- NEI has more than industrial emissions data
-  - [scc](https://ofmpub.epa.gov/sccwebservices/sccsearch/) is a code which defines the type of emissions
-  - includes aircraft, other non-point sources
-  - county = "Multiple (portable facilities)" is for non-point sources averaged over a whole county; use `fips code` in this case?
+  - data available in 2008, 2011, 2014, 2017
+- [scc](https://ofmpub.epa.gov/sccwebservices/sccsearch/) is a code which defines the type of emissions
+- EIS is grouping of SCC codes into: point, nonpoint, onroad, nonroad, and event sources
+- script will output `nei_county_pm25.rds`  and `nei_point_pm25.rds` files (saved as `s3://geomarker/nei/nei_county_pm25.rds` and `s3://geomarker/nei/nei_point_pm25.rds`)
+- county file contains `total_pm25` for each `fips`, each `nei_year` (2008, 2011, 2014, or 2017), and each `eis` category (point, nonpoint, onroad, nonroad, event)
+    - event data is not available for 2008
+    - at the time, nonpoint, and onroad data was not yet available for 2017
+- point file contains sf object with `h3` geohash, and `total_pm25` for each `nei_year` (all `eis` codes are equal to "point" for this file)
+- note that only non-zero emission estimates are included for each county, so if a county-year row is no present in the file, it can be assumed that there were zero total pm2.5 emissions
 
 ## ?? get GFED data
 
@@ -166,6 +170,13 @@ rm aod_MCD19A2.A*
 - file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (787 MB in RAM, 109 MB on disk)
 
 ## train pred model
+
+### CV
+
+- Brokamp, 2020: OOB CV R2 = XXX
+- Brokamp, 2018: LOOCV R2 = 0.91
+- Hu, 2017: 10-fold CV R2 = 0.84
+- QD, 2016: 10-fold CV R2 = 0.80
   
 ## predicting for all h3-dates
 
