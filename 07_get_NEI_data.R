@@ -57,7 +57,7 @@ d_event_2014 <- d_event_2014 %>%
 d_2014 <-
   bind_rows(
     d_nonroad_2014 %>% mutate(nei_year = "2014", eis = "nonroad"),
-    d_onroad_2014 %>% mutate(nei_year = "2014", eis = "nonroad"),
+    d_onroad_2014 %>% mutate(nei_year = "2014", eis = "onroad"),
     d_nonpoint_2014 %>% mutate(nei_year = "2014", eis = "nonpoint"),
     d_event_2014 %>% mutate(nei_year = "2014", eis = "event")
   )
@@ -130,7 +130,7 @@ d_event_2011 <- d_event_2011 %>%
 d_2011 <-
   bind_rows(
     d_nonroad_2011 %>% mutate(nei_year = "2011", eis = "nonroad"),
-    d_onroad_2011 %>% mutate(nei_year = "2011", eis = "nonroad"),
+    d_onroad_2011 %>% mutate(nei_year = "2011", eis = "onroad"),
     d_nonpoint_2011 %>% mutate(nei_year = "2011", eis = "nonpoint"),
     d_event_2011 %>% mutate(nei_year = "2011", eis = "event")
   )
@@ -208,7 +208,7 @@ d_onroad_2008 <- d_onroad_2008 %>%
 d_2008 <-
   bind_rows(
     d_nonroad_2008 %>% mutate(nei_year = "2008", eis = "nonroad"),
-    d_onroad_2008 %>% mutate(nei_year = "2008", eis = "nonroad"),
+    d_onroad_2008 %>% mutate(nei_year = "2008", eis = "onroad"),
     d_nonpoint_2008 %>% mutate(nei_year = "2008", eis = "nonpoint")
   )
 
@@ -293,14 +293,35 @@ d_point_2017$h3 <- h3::geo_to_h3(d_point_2017, res = 8)
 
 saveRDS(d_point_2017, "nei_2017_point.rds")
 
+#### save all counties into one file
 
-#### save all into one point and county files ####
+# merge to all counties in 50 states and make no emissions into zero, except for 2008 event, 2017 onroad, and 2017 nonpoint, which are truly missing
 
+county_fips <-
+  tigris::counties() %>%
+  sf::st_as_sf() %>%
+  filter(!STATEFP %in% c("60", "66", "69", "72", "78")) %>%
+  sf::st_drop_geometry() %>%
+  transmute(fips = GEOID)
 
-bind_rows(d_2008, d_2011, d_2014, d_2017) %>%
-  saveRDS("nei_county_pm25.rds")
+all_county <-
+  bind_rows(d_2008, d_2011, d_2014, d_2017) %>%
+  pivot_wider(names_from = eis, values_from = total_pm25)
+
+d_county <- left_join(county_fips, all_county, by = "fips") %>%
+  as_tibble()
+
+d_county <- replace_na(d_county, list(nonroad = 0, onroad = 0, nonpoint = 0, event = 0))
+
+d_county[d_county$nei_year == "2008", "event"] <- NA
+d_county[d_county$nei_year == "2017", "onroad"] <- NA
+d_county[d_county$nei_year == "2017", "nonpoint"] <- NA
+
+saveRDS(d_county, "nei_county_pm25.rds")
 
 system("aws s3 cp nei_county_pm25.rds s3://geomarker/nei/nei_county_pm25.rds")
+
+#### save all points into one file
 
 rbind(d_point_2008, d_point_2011, d_point_2014, d_point_2017) %>%
   saveRDS("nei_point_pm25.rds")

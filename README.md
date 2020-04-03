@@ -144,11 +144,11 @@ rm aod_MCD19A2.A*
 - [scc](https://ofmpub.epa.gov/sccwebservices/sccsearch/) is a code which defines the type of emissions
 - EIS is grouping of SCC codes into: point, nonpoint, onroad, nonroad, and event sources
 - script will output `nei_county_pm25.rds`  and `nei_point_pm25.rds` files (saved as `s3://geomarker/nei/nei_county_pm25.rds` and `s3://geomarker/nei/nei_point_pm25.rds`)
-- county file contains `total_pm25` for each `fips`, each `nei_year` (2008, 2011, 2014, or 2017), and each `eis` category (point, nonpoint, onroad, nonroad, event)
+- county file contains the estimated tons of pm2.5 emitted, as columns called `nonroad`, `onroad`, `nonpoint`, and `event`, for each `fips` and each `nei_year` (2008, 2011, 2014, or 2017)
     - event data is not available for 2008
     - at the time, nonpoint, and onroad data was not yet available for 2017
-- point file contains sf object with `h3` geohash, and `total_pm25` for each `nei_year` (all `eis` codes are equal to "point" for this file)
-- note that only non-zero emission estimates are included for each county, so if a county-year row is no present in the file, it can be assumed that there were zero total pm2.5 emissions
+    - all other counties not listed for any given nei year were set to zero
+- point file contains sf object with `h3` geohash, and `total_emissions` for each `nei_year` (all `eis` codes are equal to "point" for this file)
 
 ## ?? get GFED data
 
