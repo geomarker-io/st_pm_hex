@@ -9,29 +9,58 @@ d <-
   qs::qread("h3data_aqs.qs") %>%
   as_tibble()
 
-## TODO add in "nearby" pm measurements?  how many days / much space would we average to have no missing data?? (check EST paper)
+# median of median pm25 from yesterday, today, and tomorrow
+d_nearby_pm <-
+  d %>%
+  group_by(date) %>%
+  summarize(median_pm25 = median(pm25, na.rm = TRUE)) %>%
+  mutate(
+    median_pm25_ytd = dplyr::lag(median_pm25, n = 1, order_by = date),
+    median_pm25_tmw = dplyr::lead(median_pm25, n = 1, order_by = date)
+  ) %>%
+  group_by(date) %>%
+  mutate(nearby_pm25 = median(c(median_pm25, median_pm25_ytd, median_pm25_tmw), na.rm = TRUE)) %>%
+  select(date, nearby_pm25)
+
+# TODO once this is finalized for the training data, then export this in the pm25 script for use in predictions
+
+d <- left_join(d, d_nearby_pm, by = "date")
 
 # add in year, doy, dow
 d <- d %>%
   mutate(
     year = lubridate::year(date),
     doy = lubridate::yday(date),
-    dow = lubridate::wday(date)
+    dow = as.character(lubridate::wday(date))
   )
 
 # add in epsg 5072 coordinates
 d_geom <-
   h3::h3_to_geo_sf(d$h3) %>%
+  sf::st_transform(5072)
+
+# add in county while we're at it (for nei_county data)
+county_fips <-
+  tigris::counties() %>%
+  sf::st_as_sf() %>%
   sf::st_transform(5072) %>%
-  sf::st_coordinates()
+  transmute(fips = GEOID)
 
-d$x <- d_geom[ , "X"]
-d$y <- d_geom[ , "Y"]
-rm(d_geom)
+d_geom <- sf::st_join(d_geom, county_fips)
 
+d$county_fips <- d_geom$fips
+
+d_geom <- sf::st_coordinates(d_geom)
+
+d$x <- d_geom[, "X"]
+d$y <- d_geom[, "Y"]
+
+rm(d_geom, county_fips)
+
+# data.table it
 d <- data.table(d, key = c("h3", "year", "date"))
 
-# data.table merge in narr, nlcd, and aod data
+# data.table merge in narr and nlcd aod data
 
 d_narr <-
   qs::qread("h3data_narr.qs") %>%
@@ -75,7 +104,57 @@ rm(d_nlcd)
 # remove rows without nlcd or narr b/c these were aqs observations outside contiguous US
 d <- na.omit(d)
 
-# now read in aod (which could be missing)
+# merge in nei data
+
+nei_year_lookup <- tribble(
+  ~year, ~nei_year,
+  2000, 2008,
+  2001, 2008,
+  2002, 2008,
+  2003, 2008,
+  2004, 2008,
+  2005, 2008,
+  2006, 2008,
+  2007, 2008,
+  2008, 2008,
+  2009, 2008,
+  2010, 2011,
+  2011, 2011,
+  2012, 2011,
+  2013, 2014,
+  2014, 2014,
+  2015, 2014,
+  2016, 2017,
+  2017, 2017,
+  2018, 2017,
+  2019, 2017,
+)
+
+d_nei_point <- readRDS("nei_point_pm25.rds")
+d_nei_point <- left_join(d_nei_point, nei_year_lookup, by = "nei_year")
+d_nei_point <- as.data.table(d_nei_point, key = c("h3", "year"))
+
+d[d_nei_point, nei_point := i.total_emissions, on = c("h3", "year")]
+
+# replace missing nei point emissions with zero
+d[is.na(nei_point), nei_point := 0]
+
+d_nei_county <- readRDS("nei_county_pm25.rds")
+d_nei_county$nei_year <- as.numeric(d_nei_county$nei_year)
+d_nei_county <- left_join(d_nei_county, nei_year_lookup, by = "nei_year")
+
+d_nei_county <- rename(d_nei_county, county_fips = fips)
+
+d_nei_county <- as.data.table(d_nei_county, key = c("county_fips", "year"))
+
+d[d_nei_county, nei_nonroad := i.nonroad, on = c("county_fips", "year")]
+d[d_nei_county, nei_onroad := i.onroad, on = c("county_fips", "year")]
+d[d_nei_county, nei_nonpoint := i.nonpoint, on = c("county_fips", "year")]
+d[d_nei_county, nei_event := i.event, on = c("county_fips", "year")]
+
+d$county_fips <- NULL
+
+# merge in aod (which could be missing)
 d_aod <- fst::read_fst("h3data_aod.fst", as.data.table = TRUE)
 
 d[d_aod, aod := i.aod, on = c("h3", "date")]

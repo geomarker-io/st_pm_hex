@@ -9,10 +9,14 @@ set.seed(224)
 
 d <- fst::read_fst("h3data_train.fst", as.data.table = TRUE)
 
+# include grid indicator??
+
 d_aod <- d[!is.na(aod)][, c("h3", "date") := NULL]
 d_noaod <- d[is.na(aod)][, c("h3", "date", "aod") := NULL]
 
 rm(d)
+
+# TODO can't ranger deal with missing data???
 
 #### train aod rf
 rf_aod <- ranger(

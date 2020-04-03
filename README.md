@@ -163,11 +163,16 @@ rm aod_MCD19A2.A*
 ## make training data
 
 - merge in all columns based on pm2.5 observations
+- create "nearby pm2.5" column as median of medians of yesterday, today, and tomorrow
 - create year, day of year, and day of week columns
 - include x and y coordinates (in epsg 5072) for geohashes
-- total of 3,221,123 rows and 32 columns (2 of which are not used for training: `h3` and `date`)
+- add in county fips for each geohash for merging NEI data
+- merge in NARR data based on h3 and date
+- merge in annual data to closest available calendar year (NEI and NLCD)
+- merge in aod data
+- total of 3,221,123 rows and 38 columns (2 of which are not used for training: `h3` and `date`)
+- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (934 MB in RAM, 118 MB on disk)
 - 10,090 (0.3%) of grid-days with pm25 had non-missing aod data
-- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (787 MB in RAM, 109 MB on disk)
 
 ## train pred model
 
