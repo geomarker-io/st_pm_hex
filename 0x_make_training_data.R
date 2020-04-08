@@ -9,22 +9,26 @@ d <-
   qs::qread("h3data_aqs.qs") %>%
   as_tibble()
 
-# median of median pm25 from yesterday, today, and tomorrow
+# median of median pm25 from yesterday, today, and tomorrow for each 5-digit h3 area
 d_nearby_pm <-
   d %>%
-  group_by(date) %>%
+  mutate(h3_5 = substr(h3, 1, 5)) %>%
+  group_by(date, h3_5) %>%
   summarize(median_pm25 = median(pm25, na.rm = TRUE)) %>%
   mutate(
     median_pm25_ytd = dplyr::lag(median_pm25, n = 1, order_by = date),
     median_pm25_tmw = dplyr::lead(median_pm25, n = 1, order_by = date)
   ) %>%
-  group_by(date) %>%
+  group_by(date, h3_5) %>%
   mutate(nearby_pm25 = median(c(median_pm25, median_pm25_ytd, median_pm25_tmw), na.rm = TRUE)) %>%
-  select(date, nearby_pm25)
+  select(h3_5, date, nearby_pm25)
 
 # TODO once this is finalized for the training data, then export this in the pm25 script for use in predictions
 
-d <- left_join(d, d_nearby_pm, by = "date")
+d$h3_5 <- substr(d$h3, 1, 5)
+
+d <- left_join(d, d_nearby_pm, by = c("h3_5", "date"))
+d$h3_5 <- NULL
 
 # add in year, doy, dow
 d <- d %>%

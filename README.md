@@ -163,9 +163,11 @@ rm aod_MCD19A2.A*
 ## make training data
 
 - merge in all columns based on pm2.5 observations
-- create "nearby pm2.5" column as median of medians of yesterday, today, and tomorrow
+- create "nearby pm2.5" column as median of medians of yesterday, today, and tomorrow for each "5-digit" h3 region
+    - but this might not be avail for all predictions! (areas without any monitors...)
 - create year, day of year, and day of week columns
 - include x and y coordinates (in epsg 5072) for geohashes
+- also retain `h3` for grid cell identifier
 - add in county fips for each geohash for merging NEI data
 - merge in NARR data based on h3 and date
 - merge in annual data to closest available calendar year (NEI and NLCD)
