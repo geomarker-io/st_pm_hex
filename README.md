@@ -150,15 +150,13 @@ rm aod_MCD19A2.A*
     - all other counties not listed for any given nei year were set to zero
 - point file contains sf object with `h3` geohash, and `total_emissions` for each `nei_year` (all `eis` codes are equal to "point" for this file)
 
-## ?? get GFED data
+## 8. get FINN data
 
-- [GFED](https://www.geo.vu.nl/~gwerf/GFED/GFED4/) is the Global Fire Emissions Database
-  - 0.25 x 0.25 degree grid
-  - 1997 - present
-  - monthly pm emissions with daily fraction
 - [FINN](https://www2.acom.ucar.edu/modeling/finn-fire-inventory-ncar) is the Fire Emissions from NCAR database
   - https://doi.org/10.5194/gmd-4-625-2011
-  - http://bai.acom.ucar.edu/Data/fire/data/FINNv1.5_2017.GEOSCHEM.tar.gz
+  - FINN v1.5 files avail daily at 1km resolution from 2002 to 2018
+- script will output combined data in `s3://geomarker/st_pm_hex/h3data_finn.fst`, with columns for `date`, `area` (burned area), `h3`, and `fire_pm25` (estimated total pm25 emitted from fire)
+- file is 98 MB on disk
 
 ## make training data
 
@@ -172,8 +170,9 @@ rm aod_MCD19A2.A*
 - merge in NARR data based on h3 and date
 - merge in annual data to closest available calendar year (NEI and NLCD)
 - merge in aod data
-- total of 3,221,123 rows and 38 columns (2 of which are not used for training: `h3` and `date`)
-- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (934 MB in RAM, 118 MB on disk)
+- merge in fire data
+- total of 3,221,123 rows and 40 columns (1 of which is not used for training `date`)
+- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (983 MB in RAM, 120 MB on disk)
 - 10,090 (0.3%) of grid-days with pm25 had non-missing aod data
 
 ## train pred model

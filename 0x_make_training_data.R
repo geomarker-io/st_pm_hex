@@ -158,12 +158,25 @@ d[d_nei_county, nei_event := i.event, on = c("county_fips", "year")]
 
 d$county_fips <- NULL
 
+# TODO merge in distance to nearest PM2.5 emission site??
+
 # merge in aod (which could be missing)
 d_aod <- fst::read_fst("h3data_aod.fst", as.data.table = TRUE)
 
 d[d_aod, aod := i.aod, on = c("h3", "date")]
 
 rm(d_aod)
+
+# merge in finn data
+
+d_finn <- fst::read_fst("h3data_finn.fst")
+d_finn <- as.data.table(d_finn, key = c("date", "h3"))
+d[d_finn, fire_pm25 := i.fire_pm25, on = c("date", "h3")]
+d[d_finn, fire_area := i.area, on = c("date", "h3")]
+
+# replace missing finn estimates with zero
+d[is.na(fire_pm25), fire_pm25 := 0]
+d[is.na(fire_area), fire_area := 0]
 
 # save it
 fst::write_fst(d, "h3data_train.fst", compress = 100)
