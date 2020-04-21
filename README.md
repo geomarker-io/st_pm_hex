@@ -45,13 +45,34 @@ rm -rf h3c
 
 ## 1. make h3 grid
 
-- use the [H3 hexagonal hierarchical spatial index](https://eng.uber.com/h3/) to create the grid
-    - average area of an h3 hexagon at a precision of 8 is 0.74 sq km
-    - average length of an h3 hexagon side at a precision of 8 is 0.4614 km
-    - actual resolution of modis grid is 926 by 926 m = 0.86 sq km
-    - there are 11,932,970 unique valid H3 indexes at this resolution that we use to cover the contiguous US
-    - each hash is made up of 15 total characters; for the precision of 8, the first characteristics 10 are used and the last 5 are "filler" f's (values can be 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f)
-- see the [example cincinnati map](h3_cincy_example_map.html) for an example of the hierarchical h3 layout
+- use the [H3 hexagonal hierarchical spatial index](https://eng.uber.com/h3/) to create the grid at a precision of 8
+    - average area = 0.74 sq km
+    - average side length = 0.4614 km
+    - n unique in continental US = 11,932,970
+    - for comparison, the actual resolution of the modis grid is 926 by 926 m = 0.86 sq km
+    - see the [example cincinnati map](h3_cincy_example_map.html) for an example of the hierarchical h3 layout
+- geohash
+    - each hash is made up of 15 total characters, with the first character always being an `8`, the second character denoting the resolution and the remaining 13 being a combination of the geohash itself and "filler" f's
+    - values can be `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `a`, `b`, `c`, `d`, `e`, `f`
+    - for example, a geohash at a resolution of 6 would be `86______fffffff` where the `______` is the six digit geohash
+    - overall, resolution ranges from 0 - 15
+- see [h3 docs](https://h3geo.org/#/documentation/overview/use-cases) for more information on use cases and "why hexagons?"
+- table describing H3 properties at different resolutions
+
+   | res | n digits | code | avg area (sq km) | n unique in cont US |
+   |-----|----------|------|------------------|---------------------|
+   | 0   | 2        | `80` | 4,250,546        |                     |
+   | 1   | 3        | `81` | 607,220          |                     |
+   | 2   | 4        | `82` | 86,745           | 81                  |
+   | 3   | 4        | `83` | 12,392           |                     |
+   | 4   | 5        | `84` | 1,770            | 4,970               |
+   | 5   | 6        | `85` | 252              |                     |
+   | 6   | 6        | `86` | 36               | 139,160             |
+   | 7   | 7        | `87` | 5                |                     |
+   | 8   | 8        | `88` | 0.74             | 11,932,970          |
+   | 9   | 9        | `89` | 0.11             |                     |
+   | 10  | 10       | `8a` | 0.02             |                     |
+    
 - using the compact US h3 hex ids (saved locally as `us_h3_8_compact_hex_ids.rds`), takes up much less space and can be quickly down scaled to the desired resolution for different geospatial calculations; e.g.,
 
 ```r
