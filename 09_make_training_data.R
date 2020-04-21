@@ -188,3 +188,20 @@ tables()
 d[!is.na(aod), .N]
 d[!is.na(aod), .N] / nrow(d) * 100
 
+# impute missing aod, nei_nonroad, nei_onroad, nei_nonpoint, and nei_event values with missRanger package
+# https://doi.org/10.1093/bioinformatics/btr597 (MissForest algorithm used to impute mixed-type datasets by chaining random forests)
+# missRanger iterates multiple times over all variables until the average OOB prediction error of the models stops improving
+# imputations done during the process are combined with a predictive mean matching (PMM) step, leading to more natural imputations and improved distributional properties of the resulting values
+
+d_imp <-
+  missRanger::missRanger(
+    d,
+    seed = 224,
+    verbose = 2,
+    . ~ . - date,
+    ## pmm.k = 3,
+    num.trees = 10
+  )
+
+fst::write_fst(d_imp, "h3data_train_imputed.fst", compress = 100)
+system("aws s3 cp h3data_train_imputed.fst s3://geomarker/st_pm_hex/h3data_train_imputed.fst")
