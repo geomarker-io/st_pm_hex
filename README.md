@@ -184,7 +184,7 @@ rm aod_MCD19A2.A*
 ## make training data
 
 - merge in all columns based on pm2.5 observations
-- create "nearby pm2.5" column as median of medians of yesterday, today, and tomorrow for each "5-digit" h3 region
+- create "nearby pm2.5" column as median of medians of yesterday, today, and tomorrow for each "res 5" h3 region
     - but this might not be avail for all predictions! (areas without any monitors...)
 - create year, day of year, and day of week columns
 - include x and y coordinates (in epsg 5072) for geohashes
@@ -192,11 +192,58 @@ rm aod_MCD19A2.A*
 - add in county fips for each geohash for merging NEI data
 - merge in NARR data based on h3 and date
 - merge in annual data to closest available calendar year (NEI and NLCD)
+- add distance to closest NEI site for each grid (merge year by nei_year)
+- add distance to closest 2018 S1100 road
 - merge in aod data
 - merge in fire data
-- total of 3,221,123 rows and 40 columns (1 of which is not used for training `date`)
-- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (983 MB in RAM, 120 MB on disk)
-- 10,090 (0.3%) of grid-days with pm25 had non-missing aod data
+- total of 3,239,940 rows and 42 columns (1 of which is not used for training `date`)
+- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (1.04 GB in RAM, 120 MB on disk)
+- 10,105 (0.3%) of grid-days with pm25 had non-missing aod data
+
+| database | variable         | units         | space             | time                            | note                                                       |
+|----------|------------------|---------------|-------------------|---------------------------------|------------------------------------------------------------|
+| AQS      |                  |               | exact             | daily                           |                                                            |
+|          | pm25             | ug/m3         | h3                |                                 | geohash                                                    |
+|          | nearby_pm        | ug/m3         | "res 5" h3 region |                                 | median of medians of yesterday, today, and tomorrow        |
+| MRLC     |                  |               | 30 x 30 m         | annual (2001, 2006, 2011, 2016) | fraction TRUE inside h3 polygon, joined to nearest year    |
+|          | impervious       | mean fraction | h3                |                                 | mean of all fractional continuous values inside h3 polygon |
+|          | green            | fraction      | h3                |                                 | custom green definition based on nlcd categorization       |
+|          | primary_urban    | fraction      | h3                |                                 |                                                            |
+|          | primary_rural    | fraction      | h3                |                                 |                                                            |
+|          | secondary_urban  | fraction      | h3                |                                 |                                                            |
+|          | secondary_rural  | fraction      | h3                |                                 |                                                            |
+|          | tertiary_urban   | fraction      | h3                |                                 |                                                            |
+|          | tertiary_rural   | fraction      | h3                |                                 |                                                            |
+|          | thinned_urban    | fraction      | h3                |                                 |                                                            |
+|          | thinned_rural    | fraction      | h3                |                                 |                                                            |
+|          | nonroad_urban    | fraction      | h3                |                                 |                                                            |
+|          | nonroad_rural    | fraction      | h3                |                                 |                                                            |
+|          | energyprod_urban | fraction      | h3                |                                 |                                                            |
+|          | energyprod_rural | fraction      | h3                |                                 |                                                            |
+|          | nonimpervious    | fraction      | h3                |                                 | anything without an impervious classification              |
+| NARR     |                  |               | 0.3°×0.3°         | daily                           | value at h3 centroid                                       |
+| MODIS    |                  |               | ~ 926 x 926 m     |                                 |                                                            |
+|          | aod              | unitless      | h3                | daily                           | convert raster cells to lat/lon points and geohash         |
+| NEI      |                  |               |                   | annual (2008, 2011, 2014, 2017) | joined to nearest year                                     |
+| FINN     |                  |               |                   |                                 |                                                            |
+| TIGER    | dist_to_s1100    |               | exact             | static (2018)                   | distance to h3 centroid                                    |
+| derived  | year             |               |                   |                                 | integer                                                    |
+| derived  | day of year      |               |                   |                                 | integer                                                    |
+| derived  | day of week      |               |                   |                                 | categorical                                                |
+| derived  | X coord          |               |                   |                                 | numeric (epsg 5072)                                        |
+| derived  | Y coord          |               |                   |                                 | numeric (epsg 5072)                                        |
+| derived  | h3               |               |                   |                                 | categorical (grid indicator)                               |
+
+
+
+### impute missing data
+
+- impute missing aod, `nei_nonroad`, `nei_onroad`, `nei_nonpoint`, and `nei_event` values with `missRanger` package based on all training variables
+- https://doi.org/10.1093/bioinformatics/btr597 (MissForest algorithm used to impute mixed-type datasets by chaining random forests)
+- missRanger iterates multiple times over all variables until the average OOB prediction error of the models stops improving
+- imputations done during the process are combined with a predictive mean matching (PMM) step, leading to more natural imputations and improved distributional properties of the resulting values
+- file saved as `s3://h3data_train_imputed.fst` (XXX in RAM, XXX MB on disk)
+
 
 ## train pred model
 
@@ -209,4 +256,13 @@ rm aod_MCD19A2.A*
   
 ## predicting for all h3-dates
 
-- create function for prediction of all dates for one grid to write to a file
+- function to predict days for one grid-year: `predict_pm_grid_year()`
+    - takes in `h3` and `year`
+    - outputs `h3_year.fst` file where rows are the day of the year (1 to 365)
+    - or it could be all years for a given h3?
+    - or could further aggregate h3 to lower resolution, but would this be hard to query?
+        - no, could make column names the h3_8 points and file names the h3_6 points
+    - how big is one grid-year expected to be?
+        - one vector, where h3 is in file name and vector index represent days since 2000/01/01
+- at what resolution can we guarantee Safe Harbor provisions are met? > 20,000 people for each
+    - Erika can assign census tract population estimates to different resolutions of h3 grids
