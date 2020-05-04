@@ -96,6 +96,8 @@ d <-
             as_tibble(h3::h3_to_geo_boundary_sf(d_hex)))
 ```
 
+**be warned that `h3::geo_to_h3()` will give an incorrect geohash if the `sf` object is not lat/lon (i.e. any epsg other than 4326**
+
 ## 2. get AQS data
 
 - average by date for co-located stations (5,032,639 total rows, but only 3,347,073 total unique station/lat/lon/date combinations)
