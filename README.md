@@ -181,7 +181,7 @@ rm aod_MCD19A2.A*
 - script will output combined data in `s3://geomarker/st_pm_hex/h3data_finn.fst`, with columns for `date`, `area` (burned area), `h3`, and `fire_pm25` (estimated total pm25 emitted from fire)
 - file is 98 MB on disk
 
-## make training data
+## 9. make training data
 
 - merge in all columns based on pm2.5 observations
 - create "nearby pm2.5" column as median of medians of yesterday, today, and tomorrow for each "res 5" h3 region
@@ -245,11 +245,16 @@ rm aod_MCD19A2.A*
 - file saved as `s3://h3data_train_imputed.fst` (XXX in RAM, XXX MB on disk)
 
 
-## train pred model
+## 10. train pred model
 
-### CV
+- uses leave-location-out (LLO) resampling for random forest to guarantee that out of bag predictions are equivalent to leave on out cross-validated predictions (`s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst`)
+- also produces final random forest to use for predictions across entire spatiotemporal domain (`s3://geomarker/st_pm_hex/st_pm_hex_rf.qs`)
 
-- Brokamp, 2020: OOB CV R2 = XXX
+## 10. cv error report
+
+- creates figures and tables for quantifying CV error in `./cv_output/` folder
+
+- Brokamp, 2020: LLO CV R2 = XXX
 - Brokamp, 2018: LOOCV R2 = 0.91
 - Hu, 2017: 10-fold CV R2 = 0.84
 - QD, 2016: 10-fold CV R2 = 0.80
