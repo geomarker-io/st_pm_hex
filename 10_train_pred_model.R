@@ -25,6 +25,7 @@ inbag_list <- lapply(1:500, function(x) rep(rbinom(length(d_inbag$h3), 1, 0.632)
 ## inbag_list <- lapply(1:length(d_inbag$h3), make_inbag_LOLO)
 
 # rf for resample by station
+# on 8 cores, this takes ~ 200 GB of RAM to complete
 rf <- ranger(
   d = as.data.frame(d) %>% select(-date),
   inbag = inbag_list,
@@ -34,7 +35,7 @@ rf <- ranger(
   num.trees = length(inbag_list),
   dependent.variable.name = "pm25",
   importance = "impurity",
-  write.forest = FALSE,
+  write.forest = TRUE,
   keep.inbag = TRUE,
   oob.error = TRUE,
   save.memory = TRUE
@@ -43,8 +44,9 @@ rf <- ranger(
 # oob preds
 d$pm_pred <- rf$predictions
 
-## # pred se
-## d$pm_se <- predict(rf, data = d, type = "se", se.method = "infjack")$se
+## still fails with this much RAM lon the se pred parts...
+# pred se
+d$pm_se <- predict(rf, data = d, type = "se", se.method = "infjack")$se
 
 fst::write_fst(d, "h3data_oob_preds_llo.fst", compress = 100)
 system("aws s3 cp h3data_oob_preds_llo.fst s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst", ignore.stdout = TRUE)
@@ -60,8 +62,8 @@ rf_final <- ranger(
   dependent.variable.name = "pm25",
   importance = "impurity",
   write.forest = TRUE,
-  keep.inbag = TRUE,
-  oob.error = TRUE,
+  keep.inbag = FALSE,
+  oob.error = FALSE,
   save.memory = TRUE
 )
 

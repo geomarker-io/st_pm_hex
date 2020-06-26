@@ -6,10 +6,10 @@ library(magrittr)
 dir.create("./cv_output", showWarnings = FALSE)
 
 # make sure we have the latest OOB predictions (and RF??)
-system("aws s3 cp s3://geomarker/st_pm_hex/h3data_imputed_oob_preds.fst h3data_imputed_oob_preds.fst")
+system("aws s3 cp s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst .")
 
 d <-
-  fst::read_fst("h3data_imputed_oob_preds.fst") %>%
+  fst::read_fst("h3data_oob_preds_llo.fst") %>%
   as_tibble() %>%
   select(date, pm25, h3, year, x, y, pm_pred, aod)
 
@@ -31,7 +31,7 @@ d %>%
   knitr::kable(digits = 2) %>%
   cat(file = "cv_output/cv_accuracy_overall.md", sep = "\n")
 
-#' plot overall obs versus predicted
+#' plot overall obs versus oob predicted
 library(ggplot2)
 library(hexbin)
 library(scales)
@@ -67,8 +67,7 @@ d_temporal_cv$all <-
   d[,
     .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(pm_pred)),
     by = c("h3")
-  ][
-    ,
+  ][,
     .(
       .N,
       mae = median(abs(mean_pm25 - mean_pm_pred)),
@@ -149,10 +148,10 @@ d_temporal_cv$time <-
 d_temporal_cv %>%
   group_by(time) %>%
   summarise(
-    N = median(N, na.rm = TRUE),
-    mae = median(mae, na.rm = TRUE),
-    rmse = median(rmse, na.rm = TRUE),
-    rsq = median(rsq, na.rm = TRUE)
+    median_N = median(N, na.rm = TRUE),
+    median_mae = median(mae, na.rm = TRUE),
+    median_rmse = median(rmse, na.rm = TRUE),
+    median_rsq = median(rsq, na.rm = TRUE)
   ) %>%
   knitr::kable(digits = 2) %>%
   cat(file = "cv_output/cv_accuracy_by_time_resolution.md", sep = "\n")
@@ -169,9 +168,9 @@ ggplot(d_temporal_cv, aes(time, rsq)) +
     CB::theme_cb()
 ggsave("cv_output/cv_boxplot_rsq.pdf")
 
-#' average CV by spatial region (h3 resolution level of 4)
+#' average CV by spatial region (h3 resolution level of 2)
 
-sp_rs <- 4
+sp_rs <- 2
 
 d_temporal_cv$h3 <- purrr::map_chr(d_temporal_cv$h3, h3::h3_to_parent, res = sp_rs)
 
@@ -185,9 +184,9 @@ d_spatiotemporal_cv <-
         rsq = median(rsq, na.rm = TRUE)
     )
 
-d_spatiotemporal_cv %>%
-  pivot_wider(names_from = time, values_from = c(N, mae, rmse, rsq)) %>%
-  knitr::kable(digits = 2)
+## d_spatiotemporal_cv %>%
+##   pivot_wider(names_from = time, values_from = c(N, mae, rmse, rsq)) %>%
+##   knitr::kable(digits = 2)
 
 d_spatiotemporal_cv %>%
     pivot_wider(names_from = time, values_from = c(N, mae, rmse, rsq)) %>%
@@ -232,6 +231,6 @@ d_map %>%
     labs(fill = expression(paste(MAE~(ug/m^3)))) +
     guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5))
 
-ggsave("cv_output/cv_maps_panel_4.pdf", width = 6, height = 6)
+ggsave("cv_output/cv_maps_panel_2.pdf", width = 6, height = 6)
 
 #' create these panel maps by year, etc ???
