@@ -44,7 +44,7 @@ rf <- ranger(
 # oob preds
 d$pm_pred <- rf$predictions
 
-## still fails with this much RAM lon the se pred parts...
+## still fails with this much RAM on the se pred parts...
 # pred se
 d$pm_se <- predict(rf, data = d, type = "se", se.method = "infjack")$se
 
