@@ -96,7 +96,7 @@ d <-
             as_tibble(h3::h3_to_geo_boundary_sf(d_hex)))
 ```
 
-**be warned that `h3::geo_to_h3()` will give an incorrect geohash if the `sf` object is not lat/lon (i.e. any epsg other than 4326**
+**be warned that `h3::geo_to_h3()` will give an incorrect geohash without warning or error if the `sf` object is not lat/lon (i.e. any epsg other than 4326)**
 
 ## 2. get AQS data
 
@@ -107,8 +107,7 @@ d <-
 
 ## 3. get NLCD data
 
-- National Land Cover Database information is taken from the [geomarker-io/nlcd_raster_to_fst](https://github.com/geomarker-io/nlcd_raster_to_fst) repository that uses `.fst` files to speed up extraction and summary for polygons
-- the functions to extract from fst files are replicated locally from that repository, although the code here is specialized for the hexagon cells
+- National Land Cover Database information is taken from the [geomarker-io/addNlcdData](https://github.com/geomarker-io/addNlcdData) R package that uses `.fst` files to speed up extraction and summary for polygons
 - training data only saved as `s3://geomarker/st_pm_hex/h3data_nlcd.qs`
 
 ## 4. get NARR data
@@ -180,24 +179,28 @@ rm aod_MCD19A2.A*
 - script will output combined data in `s3://geomarker/st_pm_hex/h3data_finn.fst`, with columns for `date`, `area` (burned area), `h3`, and `fire_pm25` (estimated total pm25 emitted from fire)
 - file is 98 MB on disk
 
-## 9. make training data
+## 9. get population density
+
+- uses 2018 5-yr ACS census-tract level estimates of total population (`B01001_001`) to estimate total population for each *resolution 5* h3 cell using an area-weighted approach; population density is calculated as number of total population divided by area of each resolution 5 h3 cell in epsg:5072
+
+## 10. make training data
 
 - merge in all columns based on pm2.5 observations
-- create "nearby pm2.5" column as median of medians of yesterday, today, and tomorrow for each "res 5" h3 region
-    - but this might not be avail for all predictions! (areas without any monitors...)
-- create year, day of year, and day of week columns
-- include x and y coordinates (in epsg 5072) for geohashes
-- also retain `h3` for grid cell identifier
+- retain `h3` for grid cell identifier
 - add in county fips for each geohash for merging NEI data
+- include x and y coordinates (in epsg 5072) for geohashes
+- create year, day of year, and day of week columns
+- add indicator variable for major US holidays (new years, 4th july, TG, xmas, MLK, memorial)
 - merge in NARR data based on h3 and date
 - merge in annual data to closest available calendar year (NEI and NLCD)
-- add distance to closest NEI site for each grid (merge year by nei_year)
-- add distance to closest 2018 S1100 road
-- merge in aod data
+- add distance to closest NEI site for each grid centroid (merge year by nei_year)
+- add in population density based on res-5 h3
+- add distance to closest 2018 S1100 road for each grid centroid
+- merge in aod data (set all AOD > 2 to `NA`, n = 150)
 - merge in fire data
-- total of 3,239,940 rows and 42 columns (1 of which is not used for training `date`)
-- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (1.04 GB in RAM, 120 MB on disk)
-- 10,105 (0.3%) of grid-days with pm25 had non-missing aod data
+- total of 3,345,299 observations and 43 predictors
+- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (1.14 GB in RAM, 127 MB on disk)
+- 10,084 (0.3%) of grid-days with pm25 had non-missing aod data
 
 | database | variable         | units         | space             | time                            | note                                                       |
 |----------|------------------|---------------|-------------------|---------------------------------|------------------------------------------------------------|
@@ -227,11 +230,11 @@ rm aod_MCD19A2.A*
 | FINN     |                  |               |                   |                                 |                                                            |
 | TIGER    | dist_to_s1100    |               | exact             | static (2018)                   | distance to h3 centroid                                    |
 | derived  | year             |               |                   |                                 | integer                                                    |
-| derived  | day of year      |               |                   |                                 | integer                                                    |
-| derived  | day of week      |               |                   |                                 | categorical                                                |
-| derived  | X coord          |               |                   |                                 | numeric (epsg 5072)                                        |
-| derived  | Y coord          |               |                   |                                 | numeric (epsg 5072)                                        |
-| derived  | h3               |               |                   |                                 | categorical (grid indicator)                               |
+|          | day of year      |               |                   |                                 | integer                                                    |
+|          | day of week      |               |                   |                                 | categorical                                                |
+|          | X coord          |               |                   |                                 | numeric (epsg 5072)                                        |
+|          | Y coord          |               |                   |                                 | numeric (epsg 5072)                                        |
+|          | h3               |               |                   |                                 | categorical (grid indicator)                               |
 
 
 
@@ -241,15 +244,30 @@ rm aod_MCD19A2.A*
 - https://doi.org/10.1093/bioinformatics/btr597 (MissForest algorithm used to impute mixed-type datasets by chaining random forests)
 - missRanger iterates multiple times over all variables until the average OOB prediction error of the models stops improving
 - imputations done during the process are combined with a predictive mean matching (PMM) step, leading to more natural imputations and improved distributional properties of the resulting values
-- file saved as `s3://h3data_train_imputed.fst` (XXX in RAM, XXX MB on disk)
+- file saved as `s3://h3data_train_imputed.fst` (XXX in RAM, 137 MB on disk)
+
+#### references for this
+
+-  Wright, M. N. & Ziegler, A. (2016). ranger: A Fast
+ Implementation of Random Forests for High Dimensional Data in C++
+ and R. Journal of Statistical Software, in press.
+ http://arxiv.org/abs/1508.04409.
+- Stekhoven, D.J. and Buehlmann, P. (2012). 'MissForest -
+ nonparametric missing value imputation for mixed-type data',
+ Bioinformatics, 28(1) 2012, 112-118.
+ https://doi.org/10.1093/bioinformatics/btr597.
+ - Van Buuren, S., Groothuis-Oudshoorn, K. (2011). mice:
+ Multivariate Imputation by Chained Equations in R. Journal of
+ Statistical Software, 45(3), 1-67.
+ http://www.jstatsoft.org/v45/i03/
 
 
-## 10. train pred model
+## 11. train pred model
 
-- uses leave-location-out (LLO) resampling for random forest to guarantee that out of bag predictions are equivalent to leave on out cross-validated predictions (`s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst`)
+- uses leave-location-out (LLO) resampling for random forest to guarantee that out of bag predictions are equivalent to leave one out cross-validated predictions (`s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst`)
 - also produces final random forest to use for predictions across entire spatiotemporal domain (`s3://geomarker/st_pm_hex/st_pm_hex_rf.qs`)
 
-## 10. cv error report
+## 12. cv error report
 
 - creates figures and tables for quantifying CV error in `./cv_output/` folder
 
@@ -257,16 +275,15 @@ rm aod_MCD19A2.A*
 - Brokamp, 2018: LOOCV R2 = 0.91
 - Hu, 2017: 10-fold CV R2 = 0.84
 - QD, 2016: 10-fold CV R2 = 0.80
-  
-## predicting for all h3-dates
 
-- function to predict days for one grid-year: `predict_pm_grid_year()`
-    - takes in `h3` and `year`
-    - outputs `h3_year.fst` file where rows are the day of the year (1 to 365)
-    - or it could be all years for a given h3?
-    - or could further aggregate h3 to lower resolution, but would this be hard to query?
-        - no, could make column names the h3_8 points and file names the h3_6 points
-    - how big is one grid-year expected to be?
-        - one vector, where h3 is in file name and vector index represent days since 2000/01/01
-- at what resolution can we guarantee Safe Harbor provisions are met? > 20,000 people for each
-    - Erika can assign census tract population estimates to different resolutions of h3 grids
+## 13. create Safe Harbor aggregated h3 cells
+
+**add in results on population distribution and number of merged cells here**
+
+## 14. predicting for all h3-dates
+
+- function to predict days for one chunk of h3 grids for one year: `predict_pm_h3_5_year()`
+    - takes in `h3_5` and `year`
+    - outputs `{h3_5}_{year}.fst` with columns for date, h3, pm, pm_se
+- grab read in stuff from schwartz geohash model
+    
