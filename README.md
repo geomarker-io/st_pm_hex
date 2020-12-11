@@ -100,11 +100,10 @@ d <-
 
 ## 2. get AQS data
 
-- average by date for co-located stations (5,032,639 total rows, but only 3,347,073 total unique station/lat/lon/date combinations)
-- training only data saved `s3://geomarker/st_pm_hex/h3data_aqs.qs`
-- this also serves as the dataset tracking which h3-date combinations are needed for the training dataset
-
-- TODO subset to contiguous united states (this is already done for AOD, but won't be if we use all aqs data as training points...)
+- average by date for co-located stations (5,261,947 total rows, but only 3,456,471 total unique station/lat/lon/date combinations)
+- subset to only the contiguous united states using intersection in EPSG 5072 (n = 3,346,280)
+- create "nearby pm2.5" column (`nearby_pm`) as median of medians of yesterday, today, and tomorrow for each "res 5" h3 region
+- data saved as `s3://geomarker/st_pm_hex/h3data_aqs.qs`
 
 ## 3. get NLCD data
 
