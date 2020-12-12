@@ -232,6 +232,7 @@ rm aod_MCD19A2.A*
 | derived  | year             |               |                   |                                 | integer                                                    |
 |          | day of year      |               |                   |                                 | integer                                                    |
 |          | day of week      |               |                   |                                 | categorical                                                |
+|          | holiday          |               |                   |                                 |                                                          |
 |          | X coord          |               |                   |                                 | numeric (epsg 5072)                                        |
 |          | Y coord          |               |                   |                                 | numeric (epsg 5072)                                        |
 |          | h3               |               |                   |                                 | categorical (grid indicator)                               |
