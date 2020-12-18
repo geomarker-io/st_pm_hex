@@ -10,7 +10,6 @@ set.seed(224)
 d <- fst::read_fst("h3data_train_imputed.fst", as.data.table = TRUE)
 
 # select inbag manually so that we resample by grid, not grid-day
-
 d_inbag <- d[TRUE, .N, by = c("h3")]
 
 # subsample with binom 0.632 probability for each station to replicate bootstrap
@@ -31,8 +30,8 @@ inbag_list <- lapply(1:500, function(x) rep(rbinom(length(d_inbag$h3), 1, 0.632)
 
 # rf for resample by station
 # on 8 cores, this takes ~ 200 GB of RAM to complete
-rf <- ranger(
-  d = as.data.frame(d) %>% select(-date),
+rf_llo <- ranger(
+  d = as.data.frame(d) %>% select(-date, -h3, -nei_year),
   inbag = inbag_list,
   mtry = 6,
   seed = 224,
@@ -46,16 +45,13 @@ rf <- ranger(
   save.memory = TRUE
 )
 
-# oob preds from LLO forest
-d$oob_pm_pred <- rf$predictions
-# 
-fst::write_fst(d, "h3data_oob_preds_llo.fst", compress = 100)
-system("aws s3 cp h3data_oob_preds_llo.fst s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst", ignore.stdout = TRUE)
+qs::qsave(rf_llo, "st_pm_hex_rf_llo.qs", compress = 22, nthreads = parallel::detectCores())
+system("aws s3 cp st_pm_hex_rf_llo.qs s3://geomarker/st_pm_hex/st_pm_hex_rf_llo.qs", ignore.stdout = TRUE)
+# rf_llo <- qs::qread("st_pm_hex_rf_llo.qs", nthreads = parallel::detectCores())
 
-# rf for final predictions
-
-rf_final <- ranger(
-  d = as.data.frame(d) %>% select(-date),
+# rf for oob
+rf_oob <- ranger(
+  d = as.data.frame(d) %>% select(-date, -h3, -nei_year),
   mtry = 6,
   seed = 224,
   min.node.size = 1,
@@ -63,21 +59,29 @@ rf_final <- ranger(
   dependent.variable.name = "pm25",
   importance = "impurity",
   write.forest = TRUE,
-  keep.inbag = FALSE,
-  oob.error = FALSE,
+  keep.inbag = TRUE,
+  oob.error = TRUE,
   save.memory = TRUE
 )
 
+qs::qsave(rf_oob, "st_pm_hex_rf_oob.qs", compress = 22, nthreads = parallel::detectCores())
+system("aws s3 cp st_pm_hex_rf_oob.qs s3://geomarker/st_pm_hex/st_pm_hex_rf_oob.qs", ignore.stdout = TRUE)
+# rf_oob <- qs::qread("st_pm_hex_rf_oob.qs", nthreads = parallel::detectCores())
 
-# trees: 500
-# sample size: 3345299
-# n vars: 43
-# mtry: 6
-# target node size: 1
-# splitrule: variance
+# add in LLO and OOB predictions from forests
+d$pm_pred_llo <- rf_llo$predictions
+d$pm_pred_oob <- rf_oob$predictions
 
-# use this to generate pred se when predicting on all data
-# d$pm_se <- predict(rf_final, data = d, type = "se", se.method = "infjack")$se
+fst::write_fst(d, "h3data_oob_preds_llo.fst", compress = 100)
+system("aws s3 cp h3data_oob_preds_llo.fst s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst", ignore.stdout = TRUE)
 
-qs::qsave(rf_final, "st_pm_hex_rf.qs", compress = 22, nthreads = parallel::detectCores())
-system("aws s3 cp st_pm_hex_rf.qs s3://geomarker/st_pm_hex/st_pm_hex_rf.qs", ignore.stdout = TRUE)
+
+
+
+# "new" preds from forest
+d$pm_pred <- predict(rf_oob, data = d, type = "response")$predictions
+
+# does the S Wager package suffer from these problems too?
+
+# se of preds from prediction forest
+d$pm_pred_se <- predict(rf_oob, data = d, type = "se", se.method = "infjack")$se

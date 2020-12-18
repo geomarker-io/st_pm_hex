@@ -47,7 +47,7 @@ rm -rf h3c
 
 - use the [H3 hexagonal hierarchical spatial index](https://eng.uber.com/h3/) to create the grid at a precision of 8
     - average area = 0.74 sq km
-    - average side length = 0.4614 km
+    - average side length = 461.4 m
     - n unique in continental US = 11,932,970
     - for comparison, the actual resolution of the modis grid is 926 by 926 m = 0.86 sq km
     - see the [example cincinnati map](h3_cincy_example_map.html) for an example of the hierarchical h3 layout

@@ -6,6 +6,13 @@ library(sf)
 options(tigris_use_cache = TRUE)
 options(tigris_class = "sf")
 
+# TODO create a table of the n (%) of cells in each resolution
+# "88": 11,932,970 (100%)
+# "881": 151,263 (1%)
+# "882": 8,924,517 (75%)
+# "884": 2,857,190 (24%)
+# etc, etc...
+
 # create sf polygons for each res 5 h3 geohash polygon
 d_hex <-
     readRDS("us_h3_8_compact_hex_ids.rds") %>%

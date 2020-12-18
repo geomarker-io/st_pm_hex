@@ -3,15 +3,18 @@ library(dplyr)
 library(tibble)
 library(magrittr)
 
+# TODO create all of these outputs for llo_pm_pred, oob_pm_pred, pm_pred
+# TODO create confidence interval coverage for pm_pred predictions
+
 dir.create("./cv_output", showWarnings = FALSE)
 
-# make sure we have the latest OOB predictions (and RF??)
+# make sure we have the latest OOB predictions
 system("aws s3 cp s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst .")
 
 d <-
   fst::read_fst("h3data_oob_preds_llo.fst") %>%
   as_tibble() %>%
-  select(date, pm25, h3, year, x, y, pm_pred, aod)
+  select(date, pm25, h3, year, x, y, oob_pm_pred, aod)
 
 #' oob cv error summary stats
 d %>%
@@ -22,11 +25,11 @@ d %>%
     min_pm25 = min(pm25),
     max_pm25 = max(pm25),
     var_pm25 = var(pm25),
-    mae = median(abs(pm25 - pm_pred)),
-    rmse = sqrt(mean((pm25 - pm_pred)^2)),
-    rsq = cor(pm25, pm_pred, use = "pairwise.complete")^2,
+    mae = median(abs(pm25 - oob_pm_pred)),
+    rmse = sqrt(mean((pm25 - oob_pm_pred)^2)),
+    rsq = cor(pm25, oob_pm_pred, use = "pairwise.complete")^2,
     pseudo_rsq = 1 - (rmse^2 / var_pm25),
-    slope = lm(pm_pred ~ pm25 - 1, data = .) %>% coefficients() %>% .["pm25"]
+    slope = lm(oob_pm_pred ~ pm25 - 1, data = .) %>% coefficients() %>% .["pm25"]
   ) %>%
   knitr::kable(digits = 2) %>%
   cat(file = "cv_output/cv_accuracy_overall.md", sep = "\n")
@@ -36,7 +39,7 @@ library(ggplot2)
 library(hexbin)
 library(scales)
 
-ggplot(d, aes(pm25, pm_pred)) +
+ggplot(d, aes(pm25, oob_pm_pred)) +
     stat_bin_hex(binwidth = c(log10(1.065), log10(1.065)))+
     viridis::scale_fill_viridis(option = "C", name = "Count") +
     geom_abline(slope = 1, intercept = 0, lty = 2, alpha = 0.8, color = "darkgrey") +
@@ -65,7 +68,7 @@ d_temporal_cv <- list()
 #' 2000 - 2019
 d_temporal_cv$all <-
   d[,
-    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(pm_pred)),
+    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(oob_pm_pred)),
     by = c("h3")
   ][,
     .(
@@ -80,7 +83,7 @@ d_temporal_cv$all <-
 #' annual
 d_temporal_cv$annual <-
   d[,
-    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(pm_pred)),
+    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(oob_pm_pred)),
     by = c("h3", "year")
   ][,
     .(
@@ -95,7 +98,7 @@ d_temporal_cv$annual <-
 #' monthly
 d_temporal_cv$monthly <-
   d[,
-    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(pm_pred)),
+    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(oob_pm_pred)),
     by = c("h3", "year", "month")
   ][,
     .(
@@ -110,7 +113,7 @@ d_temporal_cv$monthly <-
 #' weekly
 d_temporal_cv$weekly <-
   d[,
-    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(pm_pred)),
+    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(oob_pm_pred)),
     by = c("h3", "year", "week")
   ][,
     .(
@@ -125,7 +128,7 @@ d_temporal_cv$weekly <-
 #' daily
 d_temporal_cv$daily <-
   d[,
-    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(pm_pred)),
+    .(.N, mean_pm25 = mean(pm25), mean_pm_pred = mean(oob_pm_pred)),
     by = c("h3", "date")
   ][,
     .(
