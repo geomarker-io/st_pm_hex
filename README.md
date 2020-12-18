@@ -237,36 +237,18 @@ rm aod_MCD19A2.A*
 |          | Y coord          |               |                   |                                 | numeric (epsg 5072)                                        |
 |          | h3               |               |                   |                                 | categorical (grid indicator)                               |
 
+### missing data
 
-
-### impute missing data
-
-- impute missing aod, `nei_nonroad`, `nei_onroad`, `nei_nonpoint`, and `nei_event` values with `missRanger` package based on all training variables
-- https://doi.org/10.1093/bioinformatics/btr597 (MissForest algorithm used to impute mixed-type datasets by chaining random forests)
-- missRanger iterates multiple times over all variables until the average OOB prediction error of the models stops improving
-- imputations done during the process are combined with a predictive mean matching (PMM) step, leading to more natural imputations and improved distributional properties of the resulting values
-- file saved as `s3://h3data_train_imputed.fst` (XXX in RAM, 137 MB on disk)
-
-#### references for this
-
--  Wright, M. N. & Ziegler, A. (2016). ranger: A Fast
- Implementation of Random Forests for High Dimensional Data in C++
- and R. Journal of Statistical Software, in press.
- http://arxiv.org/abs/1508.04409.
-- Stekhoven, D.J. and Buehlmann, P. (2012). 'MissForest -
- nonparametric missing value imputation for mixed-type data',
- Bioinformatics, 28(1) 2012, 112-118.
- https://doi.org/10.1093/bioinformatics/btr597.
- - Van Buuren, S., Groothuis-Oudshoorn, K. (2011). mice:
- Multivariate Imputation by Chained Equations in R. Journal of
- Statistical Software, 45(3), 1-67.
- http://www.jstatsoft.org/v45/i03/
-
+- `nei_nonroad`, `nei_onroad`, `nei_nonpoint`, and `nei_event` values could be missing for earlier years
+- `aod` is missing in most places
+- will not be imputed because grf handles them by using them in splits (just like we did for cincy aod model, but automatically)
+- https://grf-labs.github.io/grf/REFERENCE.html#missing-values
+- this will also allow for missing variables for new predictions
 
 ## 11. train pred model
 
-- uses leave-location-out (LLO) resampling for random forest to guarantee that out of bag predictions are equivalent to leave one out cross-validated predictions (`s3://geomarker/st_pm_hex/h3data_oob_preds_llo.fst`)
-- also produces final random forest to use for predictions across entire spatiotemporal domain (`s3://geomarker/st_pm_hex/st_pm_hex_rf.qs`)
+- use GRF with and without cluster set to h3 identifier
+- create OOB predictions using predict without new obs and predict with new obs of same training set
 
 ## 12. cv error report
 
