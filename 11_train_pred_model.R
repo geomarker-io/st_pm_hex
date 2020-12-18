@@ -1,3 +1,6 @@
+# using CCHMC cluster for this training:
+# bsub -Is -M 100000 -n 24 -W 24:00 -R "span[ptile=24]" "module load singularity; ~/singr_4.0.sif"
+
 library(data.table)
 library(tidyr)
 library(dplyr)
@@ -6,11 +9,6 @@ library(magrittr)
 library(grf)
 
 set.seed(224)
-
-# using CCHMC cluster for this training:
-# bsub -Is -M 100000 -n 24 -W 24:00 -R "span[ptile=24]" "module load singularity; ~/singr_4.0.sif"
-
-# d <- fst::read_fst("h3data_train_imputed.fst", as.data.table = TRUE)
 
 # system("aws s3 cp s3://geomarker/st_pm_hex/h3data_train.fst .")
 d <- fst::read_fst("h3data_train.fst", as.data.table = TRUE)
@@ -30,7 +28,7 @@ grf_llo <-
         honesty = TRUE,
         num.threads = parallel::detectCores(),
         seed = 224,
-        compute.oob.predictions = FALSE,
+        compute.oob.predictions = TRUE,
         tune.parameters = "all",
         clusters = as.factor(d$h3), # 1,912 possible h3 'levels'
         sample.fraction = 0.5
@@ -39,55 +37,56 @@ grf_llo <-
 tictoc::toc()
 
 qs::qsave(grf_llo, "st_pm_hex_grf_llo.qs", compress = 22, nthreads = parallel::detectCores())
-system("aws s3 cp st_pm_hex_grf_llo.qs s3://geomarker/st_pm_hex/st_pm_hex_grf_llo.qs", ignore.stdout = TRUE)
+system("aws s3 cp st_pm_hex_grf_llo.qs s3://geomarker/st_pm_hex/st_pm_hex_grf_llo.qs")
 # grf_llo <- qs::qread("st_pm_hex_grf_llo.qs", nthreads = parallel::detectCores())
 
+grf_llo
+
 tictoc::tic()
-
-# use grf::merge_forests() to put together many individual forests
-
-# check out grf::boosted_regression_forest(), but estimate.variance is not available for this!
 
 grf <-
     regression_forest(
         X = as.data.frame(d) %>% select(-date, -h3, -pm25),
         Y = d$pm25,
-        honesty = FALSE,
+        honesty = TRUE,
         num.threads = parallel::detectCores(),
         seed = 224,
         compute.oob.predictions = FALSE,
-        mtry = 6,
-        min.node.size = 5,
+        tune.parameters = "all",
         clusters = NULL,
-        num.trees = 500, # make 2000?
         sample.fraction = 0.5
     )
 
 tictoc::toc()
 
 qs::qsave(grf, "st_pm_hex_grf.qs", compress = 22, nthreads = parallel::detectCores())
-system("aws s3 cp st_pm_hex_grf.qs s3://geomarker/st_pm_hex/st_pm_hex_grf.qs", ignore.stdout = TRUE)
+system("aws s3 cp st_pm_hex_grf.qs s3://geomarker/st_pm_hex/st_pm_hex_grf.qs")
 # grf <- qs::qread("st_pm_hex_grf.qs", nthreads = parallel::detectCores())
 
+
+# LLO predictions and standard errors
+# is this already avail in the grf_llo object? (including se?)
 tictoc::tic()
+grf_oob_preds <- predict(grf_llo, estimate.variance = TRUE)
+d$pm_llo_pred <- grf_oob_preds$predictions
+d$pm_llo_pred_se <- sqrt(grf_oob_preds$variance.estimates)
+tictoc::toc()
 
-
-grf_oob_preds <- predict(grf, estimate.variance = TRUE)
-
-
+# final model predictions and standard errors
+tictoc::tic()
 grf_preds <- predict(grf, as.data.frame(d) %>% select(-date, -h3, -nei_year, -pm25), estimate.variance = TRUE)
-
+d$pm_pred <- grf_preds$predictions
+d$pm_pred_se <- sqrt(grf_preds$variance.estimates)
+tictoc::toc()
 
 # we have to grow enough trees to make the `excess.error` negligible
 # https://grf-labs.github.io/grf/reference/predict.regression_forest.html#value
 
-pm_pred <- grf_preds$predictions
-pm_pred_se <- sqrt(grf_preds$variance.estimates)
+# round all predictions and SEs to 4 significant digits
+d$pm_pred <- signif(d$pm_pred, digits = 4)
+d$pm_pred_se <- signif(d$pm_pred_se, digits = 4)
+d$pm_llo_pred <- signif(d$pm_llo_pred, digits = 4)
+d$pm_llo_pred_se <- signif(d$pm_llo_pred_se, digits = 4)
 
-tictoc::toc()
-
-# should we round our results too? GRF recommends to 8 significant digits
-# d$pm25 <- signif(d$pm25, digits = 4)
-
-qs::qsave(grf_preds, "st_pm_hex_grf_preds.qs", compress = 22, nthreads = parallel::detectCores())
-system("aws s3 cp st_pm_hex_grf_preds.qs s3://geomarker/st_pm_hex/st_pm_hex_grf_preds.qs", ignore.stdout = TRUE)
+qs::qsave(d, "h3_data_grf_preds.qs", compress = 22, nthreads = parallel::detectCores())
+system("aws s3 cp h3_data_grf_preds.qs s3://geomarker/st_pm_hex/h3_data_grf_preds.qs")

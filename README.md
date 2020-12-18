@@ -249,6 +249,7 @@ rm aod_MCD19A2.A*
 
 - use GRF with and without cluster set to h3 identifier
 - create OOB predictions using predict without new obs and predict with new obs of same training set
+- LLO and final GRF models were trained after tuning parameters as described on GRF site
 
 ## 12. cv error report
 
