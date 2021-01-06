@@ -248,6 +248,7 @@ rm aod_MCD19A2.A*
 ## 11. train pred model
 
 - use GRF with and without cluster set to h3 identifier
+- multiple forests are grown using 500 trees to save RAM; each file is saved with its randomly generated seed and then these are combined back together to make the final predictions
 - create OOB predictions using predict without new obs and predict with new obs of same training set
 - LLO and final GRF models were trained after tuning parameters as described on GRF site
 
@@ -259,6 +260,10 @@ rm aod_MCD19A2.A*
 - Brokamp, 2018: LOOCV R2 = 0.91
 - Hu, 2017: 10-fold CV R2 = 0.84
 - QD, 2016: 10-fold CV R2 = 0.80
+
+- cite this paper for why we are using LOLO CV: https://arxiv.org/pdf/2012.13867.pdf
+  - LOLO versus 10-fold-LLO has lower bias and variance
+  - "replication error" versus "interpolation error"
 
 ## 13. create Safe Harbor aggregated h3 cells
 
