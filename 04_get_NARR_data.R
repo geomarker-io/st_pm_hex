@@ -1,3 +1,9 @@
+library(sf)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(addNarrData)
+
 r_narr_empty <-
   raster::raster(
     nrows = 277,
@@ -11,38 +17,6 @@ r_narr_empty <-
     vals = NULL
   )
 
-# read in narr data for specified narr cell, dates, and variables
-# returns a data.table indexed on narr_cell and date for further manipulation
-get_narr_data <- function(narr_cell_number,
-                          start_date = as.Date("2000-01-01"),
-                          end_date = as.Date("2019-12-31"),
-                          narr_variables = c(
-                            "hpbl", "vis", "uwnd.10m", "vwnd.10m",
-                            "air.2m", "rhum.2m", "prate", "pres.sfc"
-                          )) {
-  if (length(narr_cell_number) > 1) {
-    stop("nlcd_cell should only be a single value")
-  }
-  date_seq <- seq.Date(start_date, end_date, by = 1)
-  narr_row_start <- ((narr_cell_number - 1) * 7305) + 1
-  narr_row_end <- narr_cell_number * 7305
-  out <-
-    fst::read_fst(
-      path = "./narr.fst",
-      from = narr_row_start,
-      to = narr_row_end,
-      columns = c("narr_cell", "date", narr_variables),
-      as.data.table = TRUE
-    )
-  out <- out[.(data.table::CJ(narr_cell_number, date_seq)), nomatch = 0L]
-  tibble::as_tibble(out)
-}
-
-library(sf)
-library(dplyr)
-library(tidyr)
-library(purrr)
-
 ## import training h3 as points
 d_aqs <- qs::qread("./h3data_aqs.qs")
 d <- h3::h3_to_geo_sf(d_aqs$h3)
@@ -50,23 +24,19 @@ d$date <- d_aqs$date
 d$h3 <- d_aqs$h3
 rm(d_aqs)
 
-d <- d %>%
-  sf::st_transform(crs = raster::crs(r_narr_empty))
-
 # get NARR cell number for each point
-d <- d %>%
-  mutate(narr_cell = raster::cellFromXY(r_narr_empty, as(d, "Spatial")))
+d <- d %>% sf::st_transform(crs = raster::crs(r_narr_empty))
+d <- d %>% mutate(narr_cell = raster::cellFromXY(r_narr_empty, as(d, "Spatial")))
 d <- st_drop_geometry(d)
 d <- as_tibble(d)
 
-# map across all unique narr_cell numbers to get narr data
-d_narr <- purrr::map_dfr(unique(d[["narr_cell"]]), get_narr_data)
-
-# merge in the necessary data
-d_out <- left_join(d, d_narr, by = c("narr_cell", "date"))
+# add NARR data
+d$start_date <- d$date
+d$end_date <- d$date
+d_out <- get_narr_data(d)
 
 d_out %>%
-  select(-narr_cell) %>%
+  select(-narr_cell, -start_date, -end_date) %>%
   qs::qsave("./h3data_narr.qs")
 
 system("aws s3 cp h3data_narr.qs s3://geomarker/st_pm_hex/h3data_narr.qs")
