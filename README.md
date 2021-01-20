@@ -100,9 +100,10 @@ d <-
 
 ## 2. get AQS data
 
-- average by date for co-located stations (5,261,947 total rows, but only 3,456,471 total unique station/lat/lon/date combinations)
-- subset to only the contiguous united states using intersection in EPSG 5072 (n = 3,346,280)
-- create "nearby pm2.5" column (`nearby_pm`) as median of medians of yesterday, today, and tomorrow for each "res 5" h3 region
+- get AQS data from 2000 through 2020
+- average by date for co-located stations (5,600,234 total rows, but only 3,616,687 total unique station/lat/lon/date combinations)
+- subset to only the contiguous united states using intersection in EPSG 5072 (n = 3,503,123)
+- create "nearby pm2.5" column (`nearby_pm`) as mean of means of yesterday, today, and tomorrow for each "res 5" h3 region (this data saved as `s3://geomarker/st_pm_hex/d_nearby_pm.rds`)
 - data saved as `s3://geomarker/st_pm_hex/h3data_aqs.qs`
 
 ## 3. get NLCD data
@@ -247,10 +248,9 @@ rm aod_MCD19A2.A*
 
 ## 11. train pred model
 
-- use GRF with and without cluster set to h3 identifier
-- multiple forests are grown using 500 trees to save RAM; each file is saved with its randomly generated seed and then these are combined back together to make the final predictions
+- use GRF with cluster set to h3 identifier for valid prediction CIs
+- summary of cluster sizes (min: 3; p25: 450; med: 1,336; mean: 1,750; p75: 2,468; max: 10,460)
 - create OOB predictions using predict without new obs and predict with new obs of same training set
-- LLO and final GRF models were trained after tuning parameters as described on GRF site
 
 ## 12. cv error report
 

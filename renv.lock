@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.0.2",
+    "Version": "4.0.3",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -138,6 +138,30 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "6230ec41b601066d753475948b3bf4d5"
+    },
+    "addNarrData": {
+      "Package": "addNarrData",
+      "Version": "0.0.0.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "geomarker-io",
+      "RemoteRepo": "addNarrData",
+      "RemoteRef": "master",
+      "RemoteSha": "a2ee9d69a52f5a898e1408bb320deb57756903a7",
+      "Hash": "5bcbf59bafa752e5657d0eb91ce6a49e"
+    },
+    "addNlcdData": {
+      "Package": "addNlcdData",
+      "Version": "0.0.2",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "addNlcdData",
+      "RemoteUsername": "geomarker-io",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "367db97129d2ae467706142617bd7c3ea2569a1b",
+      "Hash": "6304870e855392ce816dfe141a8ebcc4"
     },
     "askpass": {
       "Package": "askpass",
@@ -307,10 +331,10 @@
     },
     "dplyr": {
       "Package": "dplyr",
-      "Version": "0.8.5",
+      "Version": "1.0.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "57a42ddf80f429764ff7987128c3fd0a"
+      "Hash": "d0509913b27ea898189ee664b6030dc2"
     },
     "e1071": {
       "Package": "e1071",
@@ -426,10 +450,10 @@
     },
     "glue": {
       "Package": "glue",
-      "Version": "1.4.1",
+      "Version": "1.4.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "f43e0d5e85ccb0a4045670c0607ee504"
+      "Hash": "6efd734b14c6471cfe443345f3e35e29"
     },
     "googlePolylines": {
       "Package": "googlePolylines",
@@ -831,13 +855,6 @@
       "Repository": "CRAN",
       "Hash": "5e655fb54cceead0f095f22d7be33da3"
     },
-    "plogr": {
-      "Package": "plogr",
-      "Version": "0.2.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "09eb987710984fc2905c7129c7d85e65"
-    },
     "plyr": {
       "Package": "plyr",
       "Version": "1.8.6",
@@ -896,15 +913,10 @@
     },
     "purrr": {
       "Package": "purrr",
-      "Version": "0.3.3",
-      "Source": "CRAN",
+      "Version": "0.3.4",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "RemoteType": "standard",
-      "RemoteRef": "purrr",
-      "RemoteRepos": "https://cran.rstudio.com/",
-      "RemotePkgType": "source",
-      "RemoteSha": "0.3.3",
-      "Hash": "22aca7d1181718e927d403a8c2d69d62"
+      "Hash": "97def703420c8ab10d8f0e6c72101e02"
     },
     "qs": {
       "Package": "qs",
@@ -929,10 +941,10 @@
     },
     "raster": {
       "Package": "raster",
-      "Version": "3.1-5",
+      "Version": "3.4-5",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "5aef4b2e36fe729608b55abb04944827"
+      "Hash": "a3ded548110163cf499d63c3932dd499"
     },
     "readr": {
       "Package": "readr",
@@ -985,10 +997,10 @@
     },
     "rlang": {
       "Package": "rlang",
-      "Version": "0.4.6",
+      "Version": "0.4.9",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "aa263e3ce17b177c49e0daade2ee3cdc"
+      "Hash": "9d7aba7bed9a79e2403b4777428a2b12"
     },
     "rmarkdown": {
       "Package": "rmarkdown",
@@ -1147,10 +1159,10 @@
     },
     "tibble": {
       "Package": "tibble",
-      "Version": "3.0.1",
+      "Version": "3.0.4",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "1c61e4cad000e03b1bd687db16a75926"
+      "Hash": "71dffd8544691c520dd8e41ed2d7e070"
     },
     "tictoc": {
       "Package": "tictoc",
@@ -1199,6 +1211,13 @@
       "Repository": "CRAN",
       "Hash": "bc7c13dcf6db88dcb603fe327a6ea17d"
     },
+    "timeDate": {
+      "Package": "timeDate",
+      "Version": "3043.102",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "fde4fc571f5f61978652c229d4713845"
+    },
     "tinytex": {
       "Package": "tinytex",
       "Version": "0.17",
@@ -1234,10 +1253,10 @@
     },
     "vctrs": {
       "Package": "vctrs",
-      "Version": "0.3.0",
+      "Version": "0.3.5",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "fbf7ee297936697ec8404a22859da129"
+      "Hash": "d25c5bea636cf892edbfd64fc3d20c20"
     },
     "viridis": {
       "Package": "viridis",
