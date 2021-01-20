@@ -56,9 +56,9 @@ get_tile_urls <- function(Date) {
   return(paste0(MCD_url, lns))
 }
 
-## get_tile_urls(as.Date('2006-08-10'))
+## get_tile_urls(as.Date('2020-12-31'))
 ## get_tile_urls(Date = as.Date('2000-02-28'))
-## tile_url <- get_tile_urls(as.Date('2006-08-10'))[1]
+## tile_url <- get_tile_urls(as.Date('2020-12-31'))[1]
 
 
 ## use AOD data that meet the following criteria:
@@ -143,7 +143,7 @@ tile_to_raster <- function(tile_url) {
 ## get_tile_urls(date = as.Date('2006-08-10'))[[1]]
 ## tile_to_raster(get_tile_urls(date = as.Date('2006-08-10'))[[2]])
 
-date_to_composite_raster <- function(the_date = as.Date("2006-08-10")) {
+date_to_composite_raster <- function(the_date = as.Date("2020-12-17")) {
   message("now processing: ", the_date)
   dir.create("./aod_clean_rasters", showWarnings = FALSE)
   tile_urls <- get_tile_urls(Date = the_date)
@@ -153,8 +153,9 @@ date_to_composite_raster <- function(the_date = as.Date("2006-08-10")) {
     return(NULL)
   }
   d_tmp <- CB::mappp(tile_urls, tile_to_raster, parallel = TRUE)
-  ## remove any missing rasters from the list
+  ## remove any missing or null rasters from the list
   d_tmp <- d_tmp[!is.na(d_tmp)]
+  d_tmp <- d_tmp[map_lgl(d_tmp, ~ !is.null(.))]
   ## remove any rasters with all missing values
   all_missings <- map_lgl(d_tmp, ~ all(is.na(raster::getValues(.))))
   d_tmp <- d_tmp[!all_missings]
@@ -206,10 +207,3 @@ dates_to_get <-
   dates_to_get[.] %>%
   rev() %>%
   walk(purrr::possibly(date_to_composite_raster, otherwise = NULL, quiet = FALSE))
-
-## write out all rasters as one raster brick per year
-
-## year_files <- list.files(path = 'aod_clean_rasters', pattern = '2000')
-
-## raster::brick(year_files) %>%
-##   writeRaster('aod_2000.tif')
