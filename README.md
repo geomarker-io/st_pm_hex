@@ -114,7 +114,8 @@ d <-
 ## 4. get NARR data
 
 - [NARR](https://www.esrl.noaa.gov/psd/data/gridded/data.narr.html) data details
-- [geomarker-io/nlcd_raster_to_fst](https://github.com/geomarker-io/nlcd_raster_to_fst) repository that uses a `.fst` file to speed up extraction for points is used, although the code here is specialized for the hexagon centroids
+- the NARR cell for each h3 polygon cell is determined using the NARR raster
+- the [geomarker-io/addNarrData](https://github.com/geomarker-io/addNarrData) packagte is used to add daily NARR estimates for each NARR cell
 - training data only saved as `s3://geomarker/st_pm_hex/h3data_narr.qs`
 
 ## 5. get MODIS data
