@@ -4,14 +4,14 @@ library(dplyr)
 library(purrr)
 
 aod_dates <-
-  fs::dir_ls("aod", glob = "*.tif") %>%
-  fs::path_rel(start = "aod") %>%
+  fs::dir_ls("aod_clean_rasters", glob = "*.tif") %>%
+  fs::path_rel(start = "aod_clean_rasters") %>%
   fs::path_ext_remove() %>%
   stringr::str_remove(stringr::fixed("aod_clean_")) %>%
   as.Date()
 
 convert_aod_to_geohash <- function(date) {
-  fl <- glue::glue("./aod/aod_clean_{date}.tif")
+  fl <- glue::glue("./aod_clean_rasters/aod_clean_{date}.tif")
   r_tmp <- raster::raster(fl)
   names(r_tmp) <- "aod"
   # auto removes missing value cells when converting to points
