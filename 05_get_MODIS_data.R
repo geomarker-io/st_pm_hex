@@ -164,8 +164,10 @@ date_to_composite_raster <- function(the_date = as.Date("2020-12-17")) {
     file.create(paste0("aod_clean_rasters/aod_clean_", the_date, ".dummy"))
     return(NULL)
   }
-  do.call(raster::merge, d_tmp) %>%
-    raster::writeRaster(paste0("aod_clean_rasters/aod_clean_", the_date, ".tif"))
+  # if only length 1, then we don't need to merge them
+  if (length(d_tmp) > 1) d_tmp <- do.call(raster::merge, d_tmp)
+  if (length(d_tmp) == 1) d_tmp <- d_tmp[[1]]
+  raster::writeRaster(d_tmp, paste0("aod_clean_rasters/aod_clean_", the_date, ".tif"))
 }
 
 ## date_to_composite_raster(as.Date('2000-03-15'))
