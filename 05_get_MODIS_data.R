@@ -189,7 +189,7 @@ dates_available <-
   na.omit() %>%
   as.Date(format = "%Y.%m.%d")
 
-dates_we_want <- seq.Date(as.Date("2000-01-01"), to = as.Date("2019-12-31"), by = 1) # 7,305 in total
+dates_we_want <- seq.Date(as.Date("2000-01-01"), to = as.Date("2020-12-31"), by = 1)
 
 dates_to_get <-
   dates_we_want %in% dates_available %>%

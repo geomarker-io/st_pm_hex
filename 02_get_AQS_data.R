@@ -22,7 +22,7 @@ get_daily_PM <- function(year) {
     )
 }
 
-d <- mappp::mappp(2000:2019, get_daily_PM)
+d <- mappp::mappp(2000:2020, get_daily_PM)
 
 d <- bind_rows(d)
 
