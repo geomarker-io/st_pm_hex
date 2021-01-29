@@ -12,7 +12,9 @@ get_daily_PM <- function(year) {
   unzip(fl.name)
   fl.name.csv <- gsub(pattern = ".zip", ".csv", fl.name)
   d.tmp <- readr::read_csv(fl.name.csv)
+
   d.tmp %>%
+    filter(`Sample Duration` == "24 HOUR") %>%
     transmute(
       id = paste(`State Code`, `County Code`, `Site Num`, sep = "-"),
       lat = Latitude,

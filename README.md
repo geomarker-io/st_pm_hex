@@ -100,9 +100,9 @@ d <-
 
 ## 2. get AQS data
 
-- get AQS data from 2000 through 2020
-- average by date for co-located stations (5,600,234 total rows, but only 3,616,687 total unique station/lat/lon/date combinations)
-- subset to only the contiguous united states using intersection in EPSG 5072 (n = 3,503,123)
+- get observed 24 hour average PM2.5 AQS data from 2000 through 2020
+- average by date for co-located stations (2,598,268 total rows, but 2,416,892 total unique station/lat/lon/date combinations)
+- subset to only the contiguous united states using intersection in EPSG 5072 (n = 2,374,589)
 - create "nearby pm2.5" column (`nearby_pm`) as mean of means of yesterday, today, and tomorrow for each "res 5" h3 region (this data saved as `s3://geomarker/st_pm_hex/d_nearby_pm.rds`)
 - data saved as `s3://geomarker/st_pm_hex/h3data_aqs.qs`
 
@@ -190,6 +190,7 @@ rm aod_MCD19A2.A*
 - merge in all columns based on pm2.5 observations
 - retain `h3` for grid cell identifier
 - add in county fips for each geohash for merging NEI data
+- 1 station was removed because the centroid of its containing h3 grid cell was not located in Mexico (n = 280, 0.01% of the total PM2.5 observations)
 - include x and y coordinates (in epsg 5072) for geohashes
 - create year, day of year, and day of week columns
 - add indicator variable for major US holidays (new years, 4th july, TG, xmas, MLK, memorial)
@@ -198,11 +199,18 @@ rm aod_MCD19A2.A*
 - add distance to closest NEI site for each grid centroid (merge year by nei_year)
 - add in population density based on res-5 h3
 - add distance to closest 2018 S1100 road for each grid centroid
-- merge in aod data (set all AOD > 2 to `NA`, n = 150)
+- merge in aod data (set all AOD > 2 to `NA`, n = 0)
 - merge in fire data
-- total of 3,345,299 observations and 43 predictors
-- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (1.14 GB in RAM, 127 MB on disk)
-- 10,084 (0.3%) of grid-days with pm25 had non-missing aod data
+- total of 2,374,309 observations and 43 predictors
+- file saved as `s3://geomarker/st_pm_hex/h3data_train.fst` (824 MB in RAM, 137 MB on disk)
+- 7,184 (0.3%) of grid-days with pm25 had non-missing aod data
+- observed PM2.5 used for training:
+	- min: -0.10
+	- q25: 5.80
+	- median: 9.00
+	- mean: 10.76
+	- q75: 13.60
+	- max: 640.60
 
 | database | variable         | units         | space             | time                            | note                                                       |
 |----------|------------------|---------------|-------------------|---------------------------------|------------------------------------------------------------|
@@ -242,6 +250,7 @@ rm aod_MCD19A2.A*
 ### missing data
 
 - `nei_nonroad`, `nei_onroad`, `nei_nonpoint`, and `nei_event` values could be missing for earlier years
+- there are a handful of missing `nlcd` and `narr` values, which are present in the sources
 - `aod` is missing in most places
 - will not be imputed because grf handles them by using them in splits (just like we did for cincy aod model, but automatically)
 - https://grf-labs.github.io/grf/REFERENCE.html#missing-values
@@ -251,7 +260,9 @@ rm aod_MCD19A2.A*
 
 - use GRF with cluster set to h3 identifier for valid prediction CIs
 - summary of cluster sizes (min: 3; p25: 450; med: 1,336; mean: 1,750; p75: 2,468; max: 10,460)
+- save compressed grf object as `s3://geomarker/st_pm_hex/st_pm_hex_grf.qs`
 - create OOB predictions using predict without new obs and predict with new obs of same training set
+- save preds as `s3://geomarker/st_pm_hex/h3_data_grf_preds.qs`
 
 ## 12. cv error report
 
