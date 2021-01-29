@@ -6,3 +6,7 @@ nei_*
 *.qs
 /*.pdf
 /cv_output/
+/county_fips_contig_us_5072.rds
+/roads1100_sf_5072_unionized.rds
+/us_h3_5_population.rds
+/d_nearby_pm.rds

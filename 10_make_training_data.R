@@ -41,9 +41,6 @@ if (!file.exists("county_fips_contig_us_5072.rds")) {
 county_fips <- readRDS("county_fips_contig_us_5072.rds")
 
 # start with aqs data (or any geohashed points with a date and h3 column)
-# but we need to add in nearby_pm25 still
-# TODO create and export a nearby_pm25 dataset so we can merge on date and h3_5
-# couldn't we do this with "h3data_aqs.qs" already??
 d <-
   qs::qread("h3data_aqs.qs") %>%
   as.data.table(key = "h3")
@@ -71,6 +68,8 @@ d_locs$s1100_dist <-
 
 # add county fips
 d_locs$county_fips <- st_join(d_locs, county_fips)$fips
+# remove 1 point b/c h3 centroid is in Mexico
+d_locs <- filter(d_locs, !is.na(county_fips))
 
 # add in epsg 5072 coordinates
 d_locs$x <- sf::st_coordinates(d_locs)[, "X"]
@@ -122,7 +121,7 @@ d_locs <-
     names_sep = "[.]"
   ) %>%
   select(-foo) %>%
-  mutate( nei_year = as.numeric(nei_year))
+  mutate(nei_year = as.numeric(nei_year))
 
 nei_year_lookup <-
    tribble(
@@ -130,7 +129,7 @@ nei_year_lookup <-
   c(2000:2009), 2008,
   c(2010:2012), 2011,
   c(2013:2015), 2014,
-  c(2016:2019), 2017,
+  c(2016:2020), 2017,
 ) %>%
   unnest(cols = year)
 
@@ -146,6 +145,22 @@ d <- d %>%
     dow = as.character(lubridate::wday(date))
   )
 
+d <-
+  left_join(d, d_locs_all_years, by = c("h3", "year")) %>%
+  as.data.table(key = c("h3", "year", "date"))
+
+d <- left_join(d, d_locs, by = c("h3"))
+nrow(d)
+
+# again remove prediction points if the h3 centroid for a location did not fall within the contiguous US
+d <- d %>% filter(!is.na(county_fips))
+
+# nrow here is 2,374,309 (with no missing data)
+
+##################################
+
+## merge in all spatiotemporal data
+
 # add in true/false for holidays
 major_holidays <- function(years){
     out <- c(timeDate::USNewYearsDay(years),
@@ -160,22 +175,11 @@ major_holidays <- function(years){
 
 d$holiday <- d$date %in% major_holidays(2000:2020)
 
-# add year and date to data.table keys
-
-d <-
-  left_join(d, d_locs_all_years, by = c("h3", "year")) %>%
-  as.data.table(key = c("h3", "year", "date"))
-
-##################################
-
-## merge in all spatiotemporal data
-
 # now add in existing NEI data
 
 d_nei_point_allyears <- left_join(d_nei_point, nei_year_lookup, by = "nei_year")
 d_nei_point_allyears <- as.data.table(d_nei_point_allyears, key = c("h3", "year"))
 d[d_nei_point_allyears, nei_point := i.total_emissions, on = c("h3", "year")]
-
 # replace implicitly missing nei point emissions with zero
 d[is.na(nei_point), nei_point := 0]
 
@@ -194,6 +198,7 @@ d[d_nei_county, nei_event := i.event, on = c("county_fips", "year")]
 # d$county_fips <- NULL
 
 # data.table merge in narr data
+# missing data in NARR is a known problem and seems to come from the source data
 d_narr <-
   qs::qread("h3data_narr.qs") %>%
   as.data.table(key = c("h3", "date"))
@@ -239,7 +244,7 @@ d_aod <- fst::read_fst("h3data_aod.fst", as.data.table = TRUE)
 d[d_aod, aod := i.aod, on = c("h3", "date")]
 rm(d_aod)
 
-# set aod to NA where > 2.0 (n = 150 removed)
+# there are aod values greater than 2, but not relating to any of the known pm2.5 measurements
 d[d$aod > 2, "aod"] <- NA
 
 # merge in finn data
@@ -252,12 +257,6 @@ d[d_finn, fire_area := i.area, on = c("date", "h3")]
 # replace missing finn estimates with zero
 d[is.na(fire_pm25), fire_pm25 := 0]
 d[is.na(fire_area), fire_area := 0]
-
-## remove the h3 polygon that had a centroid in Mexico, so no county_fips even though station was in US
-d <- d %>%
- filter(!is.na(county_fips)) %>%
- select(-county_fips) %>%
- as.data.table()
 
 # save it
 fst::write_fst(d, "h3data_train.fst", compress = 100)

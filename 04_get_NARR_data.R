@@ -39,4 +39,6 @@ d_out %>%
   select(-narr_cell, -start_date, -end_date) %>%
   qs::qsave("./h3data_narr.qs")
 
+# missing data in NARR is a known problem and seems to come from the source data
+
 system("aws s3 cp h3data_narr.qs s3://geomarker/st_pm_hex/h3data_narr.qs")
