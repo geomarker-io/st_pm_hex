@@ -16,31 +16,38 @@ options(tigris_class = "sf")
 # create sf polygons for each res 5 h3 geohash polygon
 d_hex <-
     readRDS("us_h3_8_compact_hex_ids.rds") %>%
-    map(h3::h3_to_children, res = 5) %>%
+    map(h3::h3_to_children, res = 3) %>%
     unlist()
 
 d <-
     bind_cols(
-        tibble(h3_5 = d_hex),
+        tibble(h3_6 = d_hex),
         as_tibble(h3::h3_to_geo_boundary_sf(d_hex))
     ) %>%
     st_as_sf() %>%
     st_transform(5072)
 
-# get population for all tracts in contiguous US
+# filter to cells needed to cover the contiguous US 
 states <- tigris::states(cb = TRUE) %>%
     select(NAME) %>%
-    sf::st_drop_geometry() %>%
     filter(!NAME %in% c(
         "Guam",
         "Commonwealth of the Northern Mariana Islands", "Hawaii", "Alaska",
         "United States Virgin Islands", "American Samoa", "Puerto Rico"
-    ))
+    )) %>%
+  st_transform(5072)
 
+d$intersection <- st_intersects(d, st_union(states), sparse = FALSE)
+
+d <- d %>%
+  filter(intersection) %>%
+  select(-intersection)
+
+# get population for all tracts in contiguous US
 tract_pop <-
     tidycensus::get_acs(
         geography = "tract",
-        state = states$NAME,
+        state = st_drop_geometry(states)$NAME,
         variables = "B01001_001",
         year = 2018,
         geometry = TRUE
@@ -51,7 +58,7 @@ tract_pop <-
     ) %>%
     st_transform(5072)
 
-# calculate area-weighted population for each cell
+# calculate area-weighted population density for each grid polygon
 
 get_aw_pop <- function(grid_cell) {
     tracts_subset <- filter(
@@ -79,20 +86,21 @@ d$population <- unlist(population)
 library(tmap)
 tmap_mode('view')
 
-tm <- tm_shape(us_geohash_3 %>%
+tm <- tm_shape(d %>%
                mutate(population = round(population)),
                projection = 4326) +
   tm_polygons(col = 'population',
               palette = 'viridis',
               alpha = 0.7,
+
               id = 'geohash',
               style = 'fixed',
               breaks = c(0, 20000, 100000,
                          500000, 1000000, 5000000,
-                         12000000)) +
+                         20000000)) +
   tm_scale_bar(position = c("center", "bottom"))
 
-tmap_save(tm, 'us_h3_5_population_map.png')
+tmap_save(tm, 'us_h3_3_population_map.png')
 
 ## combine cells until all have population of >= 20,000
 
@@ -111,14 +119,14 @@ summary(filter(d, population <= 20000)$population)
 merge_lowest_pop_geohash <- function(d_in = d) {
   lowest_pop_sf <- d_in[which.min(d_in$population), ]
   if (lowest_pop_sf$population > 20000) stop("no geohashes with population <= 20,000 found.", call. = FALSE)
-  d_new <- filter(d_in, ! geohash == lowest_pop_sf$geohash)
+  d_new <- filter(d_in, ! h3_6 == lowest_pop_sf$h3_6)
   merge_candidates <- d_new[st_intersects(lowest_pop_sf, d_new)[[1]], ]
   merge_sf <- merge_candidates[which.min(merge_candidates$population), ]
   merged_sf <-
     st_union(lowest_pop_sf, merge_sf) %>%
-    transmute(geohash = paste(geohash, geohash.1, sep = "-"),
+    transmute(h3_6 = paste(h3_6, h3_6.1, sep = "-"),
               population = sum(population, population.1))
-  d_new <- filter(d_new, ! geohash == merge_sf$geohash)
+  d_new <- filter(d_new, ! h3_6 == merge_sf$h3_6)
   d_out <- rbind(d_new, merged_sf)
   return(d_out)
 }
@@ -130,9 +138,9 @@ while (min(d$population) < 20000) {
   d <- merge_lowest_pop_geohash(d)
 }
 
-saveRDS(d, "us_h3_5_population_20k_minimum.rds")
+saveRDS(d, "us_h3_4_population_20k_minimum.rds")
 
-saveRDS(d$h3_5, "us_h3_5_population_20k_minimum_hex_ids.rds")
+saveRDS(d$h3_6, "us_h3_4_population_20k_minimum_hex_ids.rds")
 
 library(tmap)
 tmap_mode('view')
@@ -150,4 +158,6 @@ tm <- tm_shape(d %>%
                          12000000)) +
   tm_scale_bar(position = c("center", "bottom"))
 
-tmap_save(tm, 'us_h3_5_merged_20k_population_map.png')
+tmap_save(tm, 'us_h3_4_merged_20k_population_map.png')
+
+summary(d$population)

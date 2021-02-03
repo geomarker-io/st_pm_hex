@@ -279,7 +279,17 @@ rm aod_MCD19A2.A*
 
 ## 13. create Safe Harbor aggregated h3 cells
 
-**add in results on population distribution and number of merged cells here**
+- same methods as for making Schwartz cells Safe Harbor Deidentified
+- used h3 resolution of 3
+  - average hexagon area of 12,392 sq km
+  - average hexagon edge length of 59.8 km
+  - 41,162 unique indexes
+- a total of 710 cells needed to cover the US
+- 169 (23.8%) have a population less than 20,000
+- among these 169, the median population is 7,116 people (min: 0.346; max: 19,930)
+- iterative merging results in 578 geohash chunks with median population of 192,095 people (min: 20,494; max: 17,148,917)
+- list of merged geohash IDs saved as `s3://geomarker/st_pm_hex/us_h3_4_population_20k_minimum_hex_ids.rds`
+
 
 ## 14. predicting for all h3-dates
 
