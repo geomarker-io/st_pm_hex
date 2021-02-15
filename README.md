@@ -293,8 +293,8 @@ rm aod_MCD19A2.A*
 
 ## 14. predicting for all h3-dates
 
-- function to predict days for one chunk of h3 grids for one year: `predict_pm_h3_5_year()`
-    - takes in `h3_5` and `year`
-    - outputs `{h3_5}_{year}.fst` with columns for date, h3, pm, pm_se
-- grab read in stuff from schwartz geohash model
+- 2 functions to (1) calculate prediction data and (2) predict pm
+    - both take in `h3_5` (or hyphen separated combination of these)
+    - (1) outputs `h3_data/{h3_5}_h3data.fst` with all data needed for prediction
+    - (2) outputs `h3_pm/{h3_5}_h3pm.fst` with all data needed for prediction
     
