@@ -46,7 +46,8 @@ d_pop <-
 d_nei_point <-
   readRDS("nei_point_pm25.rds") %>%
   sf::st_as_sf() %>%
-  sf::st_transform(5072)
+  sf::st_transform(5072) %>%
+  mutate(nei_year = as.character(nei_year))
 
 d_nei_point_year_list <-
   d_nei_point %>%
@@ -54,7 +55,6 @@ d_nei_point_year_list <-
   purrr::map(sf::st_union)
 
 d_nei_county <- readRDS("nei_county_pm25.rds")
-d_nei_county$nei_year <- as.numeric(d_nei_county$nei_year)
 
 d_aod <- fst::read_fst("h3data_aod.fst", as.data.table = TRUE)
 
@@ -243,7 +243,6 @@ create_training_data <-
     # county NEI data by year
     d_nei_county <- left_join(d_nei_county, year_nei_year, by = "nei_year")
     d_nei_county <- rename(d_nei_county, county_fips = fips)
-    d_nei_county$year <- as.character(d_nei_county$year)
     d_nei_county <- as.data.table(d_nei_county, key = c("county_fips", "year"))
 
     d[d_nei_county, nei_nonroad := i.nonroad, on = c("county_fips", "year")]
