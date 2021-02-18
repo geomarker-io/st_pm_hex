@@ -63,18 +63,24 @@ d_finn <- fst::read_fst("h3data_finn.fst") %>%
 
 safe_harbor_h3 <- readRDS("us_h3_4_population_20k_minimum_hex_ids.rds")
 
+cincinnati_h3_6s <- c(
+  "832a93fffffffff",
+  "832a90fffffffff",
+  "83266dfffffffff",
+  "832a9efffffffff"
+)
 # example combined h3 geohashes
 # the_geohash <- safe_harbor_h3[515]
 # the_geohash <- safe_harbor_h3[573]
 
 create_training_data <-
-  function(the_geohash = safe_harbor_h3[1], force = FALSE) {
+  function(the_geohash = cincinnati_h3_6s[1], force = FALSE) {
 
     if (stringr::str_detect(the_geohash, stringr::fixed("-"))) {
       the_geohash <- stringr::str_split(the_geohash, stringr::fixed("-"), simplify = FALSE)[[1]]
     }
 
-    out_name <- glue::glue("h3_data/{the_geohash}_h3data.rds")
+    out_name <- glue::glue("h3_data/{the_geohash}_h3data.qs")
 
     if (fs::file_exists(out_name) & !force) {
       message(out_name, " already exists")
@@ -124,9 +130,10 @@ create_training_data <-
     d_points$narr_cell <-
       d_points %>%
       sf::st_transform(crs = raster::crs(r_narr_empty)) %>%
-      as("Spatial") %>%
+      sf::st_coordinates() %>%
+      as.matrix() %>%
       raster::cellFromXY(r_narr_empty, .)
-
+    
     d_polygons <-
       children_geohashes %>%
       h3::h3_to_geo_boundary_sf() %>%
@@ -285,15 +292,16 @@ create_training_data <-
     d[is.na(fire_area), fire_area := 0]
 
     fs::dir_create("h3_data")
-    saveRDS(d, out_name)
+    qs::qsave(d, out_name, nthreads = parallel::detectCores())
     system(glue::glue("aws s3 cp {out_name} s3://geomarker/st_pm_hex/{out_name}"))
 
     message(out_name, " completed")
     return(invisible(NULL))
   }
 
+
 tictoc::tic()
-create_training_data(safe_harbor_h3[1])
+create_training_data(cincinnati_h3_6s[1])
 tictoc::toc()
 
 #### predict
@@ -301,16 +309,22 @@ tictoc::toc()
 grf <- qs::qread("st_pm_hex_grf.qs", nthreads = parallel::detectCores())
 
 create_predict_data <-
-  function(the_geohash, force = FALSE) {
+  function(the_geohash = safe_harbor_h3[1], force = FALSE) {
 
-    out_name <- glue::glue("h3_pm/{the_geohash}_h3pm.rds")
+    out_name <- glue::glue("h3_pm/{the_geohash}_h3pm.qs")
 
     if (fs::file_exists(out_name) & !force) {
       message(out_name, " already exists")
       return(invisible(NULL))
     }
 
-    d <- readRDS(glue::glue("h3_data/{the_geohash}_h3data.rds"))
+    in_name <- glue::glue("h3_data/{the_geohash}_h3data.qs")
+
+    if (fs::file_exists(in_name) & !force) {
+      stop("need to download prediction data!", .call = FALSE)
+    }
+
+    d <- qread(in_name, nthreads = parallel::detectCores())
 
     d$nei_year <- NULL
     d$nlcd_year <- NULL
@@ -324,6 +338,7 @@ create_predict_data <-
       mutate_at(vars(starts_with("pm_pred_")), signif, digits = 4)
 
     ## save it and upload
-    saveRDS(d, out_name)
+    fs::dir_create("h3_pm")
+    qs::qsave(d, out_name, nthreads = parallel::detectCores())
     system(glue::glue("aws s3 cp {out_name} s3://geomarker/st_pm_hex/{out_name}"))
   }

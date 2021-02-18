@@ -170,12 +170,12 @@
       "Version": "0.0.2",
       "Source": "GitHub",
       "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "addNlcdData",
       "RemoteUsername": "geomarker-io",
+      "RemoteRepo": "addNlcdData",
       "RemoteRef": "HEAD",
-      "RemoteSha": "367db97129d2ae467706142617bd7c3ea2569a1b",
-      "Hash": "6304870e855392ce816dfe141a8ebcc4"
+      "RemoteSha": "4c45439c560cec2a9f153e97b254d90d5902256d",
+      "RemoteHost": "api.github.com",
+      "Hash": "9d12db3d59226c2230270cbbc81d1376"
     },
     "askpass": {
       "Package": "askpass",
@@ -377,6 +377,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "ec8ca05cffcc70569eaaad8469d2a3a7"
+    },
+    "exactextractr": {
+      "Package": "exactextractr",
+      "Version": "0.5.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "3c8c991ac3c9779172b445f1b6546dc6"
     },
     "fansi": {
       "Package": "fansi",
