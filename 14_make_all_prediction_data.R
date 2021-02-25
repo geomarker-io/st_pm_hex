@@ -6,16 +6,6 @@ library(sf)
 options(tigris_use_cache = TRUE)
 options(tigris_class = "sf")
 
-if (!file.exists("roads1100_sf_5072_unionized.rds")) {
-  roads1100 <-
-    tigris::primary_roads(year = 2018) %>%
-    sf::st_transform(5072) %>%
-    sf::st_union()
-  saveRDS(roads1100, "roads1100_sf_5072_unionized.rds")
-}
-
-roads1100 <- readRDS("roads1100_sf_5072_unionized.rds")
-
 if (!file.exists("county_fips_contig_us_5072.rds")) {
   states_to_keep <-
     tigris::states() %>%
@@ -39,10 +29,6 @@ if (!file.exists("county_fips_contig_us_5072.rds")) {
 
 county_fips <- readRDS("county_fips_contig_us_5072.rds")
 
-d_pop <-
-  readRDS("us_h3_5_population.rds") %>%
-  as.data.table()
-
 d_nei_point <-
   readRDS("nei_point_pm25.rds") %>%
   sf::st_as_sf() %>%
@@ -55,11 +41,6 @@ d_nei_point_year_list <-
   purrr::map(sf::st_union)
 
 d_nei_county <- readRDS("nei_county_pm25.rds")
-
-d_aod <- fst::read_fst("h3data_aod.fst", as.data.table = TRUE)
-
-d_finn <- fst::read_fst("h3data_finn.fst") %>%
-  as.data.table(key = c("date", "h3"))
 
 safe_harbor_h3 <- readRDS("us_h3_4_population_20k_minimum_hex_ids.rds")
 
@@ -95,23 +76,10 @@ create_training_data <-
       st_transform(5072) %>%
       mutate(h3 = children_geohashes)
 
-    d_points$s1100_dist <-
-      mappp::mappp(
-        seq_len(nrow(d_points)),
-        ~ st_distance(d_points[., ], roads1100),
-        parallel = TRUE
-      ) %>%
-      unlist()
-
     d_points$county_fips <- st_join(d_points, county_fips)$fips
 
     d_points$x <- sf::st_coordinates(d_points)[, "X"]
     d_points$y <- sf::st_coordinates(d_points)[, "Y"]
-
-    d_points <- d_points %>%
-      mutate(h3_5 = h3::h3_to_parent(h3, res = 5)) %>%
-      left_join(select(d_pop, -geometry), by = "h3_5") %>%
-      select(-h3_5, -population, -area)
 
     # get NARR cell number for each point
     r_narr_empty <-
@@ -214,32 +182,23 @@ create_training_data <-
     d <- d %>%
       mutate(
         year = as.character(lubridate::year(date)),
-        doy = lubridate::yday(date),
-        dow = as.character(lubridate::wday(date))
+        doy = lubridate::yday(date)
       )
 
     d <- left_join(d, d_nlcd, by = c("h3", "year"))
     d <- left_join(d, d_nei, by = c("h3", "year"))
 
+    # remove nlcd variables we don't need
+    d <- select(
+      d, -nonimpervious, -impervious, -secondary_urban, -tertiary_urban,
+      -nonroad_urban, -primary_urban, -primary_rural, -secondary_rural,
+      -tertiary_rural, -thinned_urban, -thinned_rural, -nonroad_rural,
+      -energyprod_urban, -energyprod_rural
+    )
+
     # data.table it
     d <- as.data.table(d, key = c("h3", "year", "date"))
     
-    # add in true/false for holidays
-    major_holidays <- function(years) {
-      out <- c(
-        timeDate::USNewYearsDay(years),
-        timeDate::USIndependenceDay(years),
-        timeDate::USThanksgivingDay(years),
-        timeDate::USChristmasDay(years),
-        timeDate::USLaborDay(years),
-        timeDate::USMLKingsBirthday(years),
-        timeDate::USMemorialDay(years)
-      )
-      as.Date(out)
-    }
-
-    d$holiday <- d$date %in% major_holidays(2000:2020)
-
     # geohashed nei point data (make implicitly missing data equal to zero)
     d_nei_point_allyears <- left_join(d_nei_point, year_nei_year, by = "nei_year")
     d_nei_point_allyears <- as.data.table(d_nei_point_allyears, key = c("h3", "year"))
@@ -278,18 +237,6 @@ create_training_data <-
     d[d_for_narr, rhum.2m := i.rhum.2m, on = c("narr_cell", "date")]
     d[d_for_narr, prate := i.prate, on = c("narr_cell", "date")]
     d[d_for_narr, pres.sfc := i.pres.sfc, on = c("narr_cell", "date")]
-
-    # merge in aod
-    d[d_aod, aod := i.aod, on = c("h3", "date")]
-
-    d[d$aod > 2, "aod"] <- NA
-
-    d[d_finn, fire_pm25 := i.fire_pm25, on = c("date", "h3")]
-    d[d_finn, fire_area := i.area, on = c("date", "h3")]
-
-    # replace missing finn estimates with zero
-    d[is.na(fire_pm25), fire_pm25 := 0]
-    d[is.na(fire_area), fire_area := 0]
 
     fs::dir_create("h3_data")
     qs::qsave(d, out_name, nthreads = parallel::detectCores())
