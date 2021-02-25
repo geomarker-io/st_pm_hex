@@ -31,6 +31,13 @@ d %>%
   pull(n) %>%
   summary()
 
+## TODO filter to only clusters with at least n observations; use equalize.cluster.weights
+
+
+## TODO how can we plot OOB error rate with number of trees
+
+## consider using lots of smaller forests and then unioning these
+
 tictoc::tic()
 grf <-
     regression_forest(
@@ -40,9 +47,9 @@ grf <-
         num.threads = parallel::detectCores(),
         compute.oob.predictions = TRUE,
         sample.fraction = 0.5,
-        num.trees = 500,
+        num.trees = 500, # default 2000
         mtry = 27,
-        min.node.size = 1,
+        min.node.size = 1, # default 5
         alpha = 0.05,
         imbalance.penalty = 0,
         honesty = FALSE,
@@ -52,7 +59,7 @@ grf <-
     )
 tictoc::toc()
 
-qs::qsave(grf, "st_pm_hex_grf.qs", compress = 22, nthreads = parallel::detectCores())
+qs::qsave(grf, "st_pm_hex_grf.qs", nthreads = parallel::detectCores())
 system("aws s3 cp st_pm_hex_grf.qs s3://geomarker/st_pm_hex/st_pm_hex_grf.qs")
 
 tictoc::tic()
@@ -74,5 +81,11 @@ d <- d %>%
     mutate_at(vars(starts_with("pm_pred_")), signif, digits = 4)
 
 # save it
-qs::qsave(d, "h3_data_grf_preds.qs", compress = 22, nthreads = parallel::detectCores())
+qs::qsave(d, "h3_data_grf_preds.qs", nthreads = parallel::detectCores())
 system("aws s3 cp h3_data_grf_preds.qs s3://geomarker/st_pm_hex/h3_data_grf_preds.qs")
+
+## query variable importance; can we reduce forest size?
+## less variables?, fewer trees?, smaller sample.fraction?
+
+# a weighted sum of how many times a variable was used in splitting at each depth in the forest
+var_imp <- variable_importance(grf, decay.exponent = 2, max.depth = 4)

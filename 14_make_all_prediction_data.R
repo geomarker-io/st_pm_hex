@@ -300,45 +300,10 @@ create_training_data <-
   }
 
 
-tictoc::tic()
-create_training_data(cincinnati_h3_6s[1])
-tictoc::toc()
+## tictoc::tic()
+## create_training_data(cincinnati_h3_6s[1])
+## tictoc::toc()
 
-#### predict
+purrr::walk(cincinnati_h3_6s, create_training_data)
 
-grf <- qs::qread("st_pm_hex_grf.qs", nthreads = parallel::detectCores())
-
-create_predict_data <-
-  function(the_geohash = safe_harbor_h3[1], force = FALSE) {
-
-    out_name <- glue::glue("h3_pm/{the_geohash}_h3pm.qs")
-
-    if (fs::file_exists(out_name) & !force) {
-      message(out_name, " already exists")
-      return(invisible(NULL))
-    }
-
-    in_name <- glue::glue("h3_data/{the_geohash}_h3data.qs")
-
-    if (fs::file_exists(in_name) & !force) {
-      stop("need to download prediction data!", .call = FALSE)
-    }
-
-    d <- qread(in_name, nthreads = parallel::detectCores())
-
-    d$nei_year <- NULL
-    d$nlcd_year <- NULL
-    d$dow <- as.numeric(d$dow)
-    d$holiday <- as.numeric(d$holiday)
-
-    grf_preds <- predict(grf_cluster, d, estimate.variance = TRUE)
-    #TODO round all predictions and SEs to 4 significant digits???
-    # will this save any size?
-    d <- d %>%
-      mutate_at(vars(starts_with("pm_pred_")), signif, digits = 4)
-
-    ## save it and upload
-    fs::dir_create("h3_pm")
-    qs::qsave(d, out_name, nthreads = parallel::detectCores())
-    system(glue::glue("aws s3 cp {out_name} s3://geomarker/st_pm_hex/{out_name}"))
-  }
+purrr::walk(safe_harbor_h3, create_training_data)
