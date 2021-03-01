@@ -42,6 +42,8 @@ d_nei_point_year_list <-
 
 d_nei_county <- readRDS("nei_county_pm25.rds")
 
+nearby_pm <- readRDS("d_nearby_pm.rds")
+
 safe_harbor_h3 <- readRDS("us_h3_4_population_20k_minimum_hex_ids.rds")
 
 cincinnati_h3_6s <- c(
@@ -53,6 +55,8 @@ cincinnati_h3_6s <- c(
 # example combined h3 geohashes
 # the_geohash <- safe_harbor_h3[515]
 # the_geohash <- safe_harbor_h3[573]
+
+## TODO fix bug where outname is misread when using geohash combo with hyphens
 
 create_training_data <-
   function(the_geohash = cincinnati_h3_6s[1], force = FALSE) {
@@ -177,6 +181,11 @@ create_training_data <-
         date = seq.Date(as.Date("2000-01-01"), as.Date("2020-12-31"), by = 1),
         h3 = children_geohashes
       )
+
+    ## add in nearby pm25
+    d$h3_5 <- purrr::map_chr(d$h3, h3::h3_to_parent, res = 5)
+    d <- left_join(d, st_drop_geometry(nearby_pm), by = c("h3_5", "date"))
+    d$h3_5 <- NULL
 
     # add in year, doy, dow
     d <- d %>%

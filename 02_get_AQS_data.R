@@ -59,7 +59,8 @@ d$h3 <- h3::geo_to_h3(d, res = 8)
 # median of median pm25 from yesterday, today, and tomorrow for each res-5 h3 area
 d_nearby_pm <-
   d %>%
-  mutate(h3_5 = h3::h3_to_parent(h3, res = 5)) %>%
+  st_drop_geometry() %>%
+  mutate(h3_5 = purrr::map_chr(h3, h3::h3_to_parent, res = 5)) %>%
   group_by(date, h3_5) %>%
   summarize(mean_pm25 = mean(pm25, na.rm = TRUE), .groups = "keep") %>%
   mutate(
@@ -73,8 +74,8 @@ d_nearby_pm <-
 saveRDS(d_nearby_pm, "d_nearby_pm.rds")
 system("aws s3 cp d_nearby_pm.rds s3://geomarker/st_pm_hex/d_nearby_pm.rds")
 
-d$h3_5 <- h3::h3_to_parent(d$h3, res = 5)
-d <- left_join(d, st_drop_geometry(d_nearby_pm), by = c("h3_5", "date"))
+d$h3_5 <- purrr::map_chr(d$h3, h3::h3_to_parent, res = 5)
+d <- left_join(d, d_nearby_pm, by = c("h3_5", "date"))
 d$h3_5 <- NULL
 
 # save

@@ -80,7 +80,7 @@ d_pop <-
   readRDS("us_h3_5_population.rds") %>%
   as.data.table()
 
-d$h3_5 <- h3::h3_to_parent(d$h3, res = 5)
+d$h3_5 <- purrr::map_chr(d$h3, h3::h3_to_parent, res = 5)
 d[d_pop, population_density := i.population_density, on = c("h3_5")]
 d$h3_5 <- NULL
 
