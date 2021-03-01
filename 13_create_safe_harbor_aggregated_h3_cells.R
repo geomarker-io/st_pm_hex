@@ -138,9 +138,9 @@ while (min(d$population) < 20000) {
   d <- merge_lowest_pop_geohash(d)
 }
 
-saveRDS(d, "us_h3_4_population_20k_minimum.rds")
+saveRDS(d, "us_h3_3_population_20k_minimum.rds")
 
-saveRDS(d$h3_6, "us_h3_4_population_20k_minimum_hex_ids.rds")
+saveRDS(d$h3_6, "us_h3_3_population_20k_minimum_hex_ids.rds")
 
 library(tmap)
 tmap_mode('view')
