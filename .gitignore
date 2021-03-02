@@ -12,3 +12,5 @@ nei_*
 /d_nearby_pm.rds
 /us_h3_5_population_map.png
 /us_h3_4_population_20k_minimum.rds
+/st_pm_hex_grf_preds.rds
+/us_h3_3_population_20k_minimum.rds
