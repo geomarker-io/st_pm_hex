@@ -149,9 +149,6 @@ d <-
   left_join(d, d_locs_all_years, by = c("h3", "year")) %>%
   as.data.table(key = c("h3", "year", "date"))
 
-d <- left_join(d, d_locs, by = c("h3"))
-nrow(d)
-
 # again remove prediction points if the h3 centroid for a location did not fall within the contiguous US
 d <- d %>% filter(!is.na(county_fips))
 
@@ -261,9 +258,6 @@ d[is.na(fire_area), fire_area := 0]
 # save it
 fst::write_fst(d, "h3data_train.fst", compress = 100)
 system("aws s3 cp h3data_train.fst s3://geomarker/st_pm_hex/h3data_train.fst")
-# when we do this for points, also save all h3 data as "h3data_{gh5}.fst" so we can have everything for further use later
-
-# d <- fst::read_fst("h3data_train.fst", as.data.table = TRUE)
 
 # some summary stuff
 tables()
