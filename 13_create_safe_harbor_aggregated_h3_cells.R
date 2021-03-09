@@ -158,6 +158,6 @@ tm <- tm_shape(d %>%
                          12000000)) +
   tm_scale_bar(position = c("center", "bottom"))
 
-tmap_save(tm, 'us_h3_4_merged_20k_population_map.png')
+tmap_save(tm, 'us_h3_3_merged_20k_population_map.png')
 
 summary(d$population)
