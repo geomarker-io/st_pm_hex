@@ -8,31 +8,60 @@ library(grf)
 set.seed(224)
 
 pred_names <- c(
-  "nearby_pm25",
-  "hpbl",
-  "doy",
-  "x",
-  "air.2m",
-  "vwnd.10m",
-  "y",
-  "pres.sfc",
-  "vis",
-  "rhum.2m",
-  "nei_event",
-  "nei_nonpoint",
-  "prate",
+  "population_density",
+  "year",
+  "doy", "dow",
+  "s1100_dist",
+  "x", "y",
   "nei_dist",
-  "uwnd.10m",
-  "nei_point",
-  "nei_nonroad",
-  "green",
-  "nei_onroad"
+  "nearby_pm",
+  "holiday",
+  "nei_point", "nei_nonroad", "nei_onroad", "nei_nonpoint", "nei_event",
+  "hpbl", "vis", "uwnd.10m", "vwnd.10m", "air.2m", "rhum.2m", "prate", "pres.sfc",
+  "impervious", "green", "primary_urban", "primary_rural",
+  "secondary_urban", "secondary_rural",
+  "tertiary_urban", "tertiary_rural",
+  "thinned_urban", "thinned_rural",
+  "nonroad_urban", "nonroad_rural",
+  "energyprod_urban", "energyprod_rural",
+  "nonimpervious",
+  "aod",
+  "fire_pm25", "fire_area"
 )
 
-# system("aws s3 cp s3://geomarker/st_pm_hex/h3data_train.fst .")
+pred_names <- c(
+  "nearby_pm",
+  "x",
+  "hpbl",
+  "doy",
+  "nei_event",
+  "vwnd.10m",
+  "air.2m",
+  "rhum.2m",
+  "y",
+  "vis",
+  "nei_nonroad",
+  "uwnd.10m",
+  "pres.sfc",
+  "population_density",
+  "nei_dist",
+  "prate",
+  "green",
+  "holiday",
+  "impervious",
+  "nonimpervious",
+  "nonroad_urban",
+  "dow",
+  "aod"
+)
+
+# make forests for all years using selected variables
 d <-
   fst::read_fst("h3data_train.fst", as.data.table = TRUE) %>%
   select(all_of(c(pred_names, "pm25", "h3", "year", "date")))
+
+d$holiday <- as.numeric(d$holiday)
+d$dow <- as.numeric(d$dow)
 
 # round training data to 4 significant digits
 d$pm25 <- signif(d$pm25, digits = 4)
@@ -42,40 +71,9 @@ n_distinct(d$h3) # 1,684
 
 n_distinct(select(d, h3, year)) #17,813
 
-d %>%
-  group_by(h3, year) %>%
-  summarize(n = n()) %>%
-  pull(n) %>%
-  summary()
-
-# 100 is about equal to the 1st quartile of cluster sizes (n = 97)
-
-d %>%
-  group_by(h3, year) %>%
-  summarize(n = n()) %>%
-  group_by(n >= 100) %>%
-  summarize(n = n())
-
-# keeps 13,221 of 17,813 possible clusters
-
-d <-
-  d %>%
-  group_by(year, h3) %>%
-  nest() %>%
-  mutate(n = purrr::map_dbl(data, nrow)) %>%
-  filter(n > 100) %>%
-  select(-n) %>%
-  unnest(cols = c(data)) %>%
-  group_by(year) %>%
-  nest()
-
 train_and_save_grf <- function(yr) {
 
-  d_train <-
-    d %>%
-    filter(year == yr) %>%
-    pull(data) %>%
-    .[[1]]
+  d_train <- filter(d, year == yr)
 
   grf <-
     regression_forest(
@@ -85,8 +83,8 @@ train_and_save_grf <- function(yr) {
       num.threads = parallel::detectCores(),
       compute.oob.predictions = TRUE,
       sample.fraction = 0.5,
-      num.trees = 2000, # default 2000
-      mtry = 19, # 19 total predictors now
+      num.trees = 2000,
+      mtry = 14,
       min.node.size = 1, # default 5
       alpha = 0.05,
       imbalance.penalty = 0,
@@ -95,6 +93,12 @@ train_and_save_grf <- function(yr) {
       equalize.cluster.weights = FALSE,
       tune.parameters = "none"
     )
+
+  ## var_imp <- variable_importance(grf)
+  ## vi <- tibble(var_imp = round(var_imp, 4),
+  ##              variable = names(select(d_train, all_of(pred_names))))
+  ## knitr::kable(arrange(vi, desc(var_imp)))
+  ## median(abs(grf$predictions - grf$Y.orig))
 
   qs::qsave(grf,
     glue::glue("st_pm_hex_grf_{yr}.qs"),
@@ -131,7 +135,6 @@ train_and_save_grf <- function(yr) {
 }
 
 purrr::walk(2000:2020, train_and_save_grf)
-
 
 ## collect all predictions, combine, upload
 

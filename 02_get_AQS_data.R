@@ -56,32 +56,10 @@ d <- filter(d, d_intersection)
 # geohash
 d$h3 <- h3::geo_to_h3(d, res = 8)
 
-# median of median pm25 from yesterday, today, and tomorrow for each res-5 h3 area
-d_nearby_pm <-
-  d %>%
-  st_drop_geometry() %>%
-  mutate(h3_5 = purrr::map_chr(h3, h3::h3_to_parent, res = 5)) %>%
-  group_by(date, h3_5) %>%
-  summarize(mean_pm25 = mean(pm25, na.rm = TRUE), .groups = "keep") %>%
-  mutate(
-    mean_pm25_ytd = dplyr::lag(mean_pm25, n = 1, order_by = date),
-    mean_pm25_tmw = dplyr::lead(mean_pm25, n = 1, order_by = date)
-  ) %>%
-  group_by(date, h3_5) %>%
-  mutate(nearby_pm25 = mean(c(mean_pm25, mean_pm25_ytd, mean_pm25_tmw), na.rm = TRUE)) %>%
-  select(h3_5, date, nearby_pm25)
-
-saveRDS(d_nearby_pm, "d_nearby_pm.rds")
-system("aws s3 cp d_nearby_pm.rds s3://geomarker/st_pm_hex/d_nearby_pm.rds")
-
-d$h3_5 <- purrr::map_chr(d$h3, h3::h3_to_parent, res = 5)
-d <- left_join(d, d_nearby_pm, by = c("h3_5", "date"))
-d$h3_5 <- NULL
-
 # save
 d %>%
   sf::st_drop_geometry() %>%
-  select(date, pm25, h3, nearby_pm25) %>%
+  select(date, pm25, h3) %>%
   qs::qsave("h3data_aqs.qs")
 
 system("aws s3 cp h3data_aqs.qs s3://geomarker/st_pm_hex/h3data_aqs.qs")

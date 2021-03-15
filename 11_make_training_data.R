@@ -158,6 +158,11 @@ d <- d %>% filter(!is.na(county_fips))
 
 ## merge in all spatiotemporal data
 
+nearby_pm <- readRDS("nearby_pm.rds")
+d$h3_3 <- purrr::map_chr(d$h3, h3::h3_to_parent, res = 3)
+d <- left_join(d, nearby_pm, by = c("h3_3" = "h3", "date"))
+d$h3_3 <- NULL
+
 # add in true/false for holidays
 major_holidays <- function(years){
     out <- c(timeDate::USNewYearsDay(years),

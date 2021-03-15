@@ -98,27 +98,43 @@ d <-
 
 **be warned that `h3::geo_to_h3()` will give an incorrect geohash without warning or error if the `sf` object is not lat/lon (i.e. any epsg other than 4326)**
 
+**don't use a resolution of 2 or 1 when going to children; this is unstable and will result in missing polygons**
+
 ## 2. get AQS data
 
 - get observed 24 hour average PM2.5 AQS data from 2000 through 2020
 - average by date for co-located stations (2,598,268 total rows, but 2,416,892 total unique station/lat/lon/date combinations)
 - subset to only the contiguous united states using intersection in EPSG 5072 (n = 2,374,589)
-- create "nearby pm2.5" column (`nearby_pm`) as mean of means of yesterday, today, and tomorrow for each "res 5" h3 region (this data saved as `s3://geomarker/st_pm_hex/d_nearby_pm.rds`)
 - data saved as `s3://geomarker/st_pm_hex/h3data_aqs.qs`
 
-## 3. get NLCD data
+## 3. make nearby pm data
+
+- most AQS data for 1 in 3 sampling fall on the same day
+- summarizing number of measurements per day:
+  - min: 0
+  - 25p: 104
+  - median: 150
+  - mean: 309.6
+  - 75p: 567.5
+  - max: 1012
+- aggregate data to h3 resolution 3 (see `h3_3_and_aqs_map.html` for measurement location with dot size by number of total days with measurements *and* all h5 resolution 3 polygons)
+- create `nearby_pm` as mean of yesterday, today, and tomorrow for each h3_5 cell
+- average all `nearby_pm` values for each polygon and date including the k-ring of polygons around it
+- create "nearby pm2.5" column (`nearby_pm`) as mean of means of yesterday, today, and tomorrow for each "res 5" h3 region (this data saved as `s3://geomarker/st_pm_hex/nearby_pm.rds`)
+
+## 4. get NLCD data
 
 - National Land Cover Database information is taken from the [geomarker-io/addNlcdData](https://github.com/geomarker-io/addNlcdData) R package that uses `.fst` files to speed up extraction and summary for polygons
 - training data only saved as `s3://geomarker/st_pm_hex/h3data_nlcd.qs`
 
-## 4. get NARR data
+## 5. get NARR data
 
 - [NARR](https://www.esrl.noaa.gov/psd/data/gridded/data.narr.html) data details
 - the NARR cell for each h3 polygon cell is determined using the NARR raster
 - the [geomarker-io/addNarrData](https://github.com/geomarker-io/addNarrData) packagte is used to add daily NARR estimates for each NARR cell
 - training data only saved as `s3://geomarker/st_pm_hex/h3data_narr.qs`
 
-## 5. get MODIS data
+## 6. get MODIS data
 
 - [MCD19A2: MODIS/Terra and Aqua MAIAC Land AOD Daily L2G 1km SIN Grid V006](https://lpdaac.usgs.gov/products/mcd19a2v006/)
 - [MCD19A2 User Guide](https://lpdaac.usgs.gov/documents/110/MCD19_User_Guide_V6.pdf)
@@ -155,12 +171,12 @@ rm aod_MCD19A2.A*
 - sync to S3 drive with `aws s3 sync ./aod_clean_rasters s3://geomarker/aod`
 
 
-## 6. geohash AOD data
+## 7. geohash AOD data
 
 - use `06_make_AOD_data.R` to extract all non-missing AOD data from folder of rasters as a data.table fst file keyed on h3 and date
 - `h3data_aod.fst` (saved as `s3://geomarker/st_pm_hex/aod.fst`) takes up 6.9 GB in RAM and 1.1 GB on disk
 
-## 7. get NEI data
+## 8. get NEI data
 
 - [NEI](https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei) is the National Emissions Inventory Database
   - data available in 2008, 2011, 2014, 2017
@@ -173,7 +189,7 @@ rm aod_MCD19A2.A*
     - all other counties not listed for any given nei year were set to zero
 - point file contains sf object with `h3` geohash, and `total_emissions` for each `nei_year` (all `eis` codes are equal to "point" for this file)
 
-## 8. get FINN data
+## 9. get FINN data
 
 - [FINN](https://www2.acom.ucar.edu/modeling/finn-fire-inventory-ncar) is the Fire Emissions from NCAR database
   - https://doi.org/10.5194/gmd-4-625-2011
@@ -181,11 +197,11 @@ rm aod_MCD19A2.A*
 - script will output combined data in `s3://geomarker/st_pm_hex/h3data_finn.fst`, with columns for `date`, `area` (burned area), `h3`, and `fire_pm25` (estimated total pm25 emitted from fire)
 - file is 98 MB on disk
 
-## 9. get population density
+## 10. get population density
 
 - uses 2018 5-yr ACS census-tract level estimates of total population (`B01001_001`) to estimate total population for each *resolution 5* h3 cell using an area-weighted approach; population density is calculated as number of total population divided by area of each resolution 5 h3 cell in epsg:5072
 
-## 10. make training data
+## 11. make training data
 
 - merge in all columns based on pm2.5 observations
 - retain `h3` for grid cell identifier
@@ -256,15 +272,16 @@ rm aod_MCD19A2.A*
 - https://grf-labs.github.io/grf/REFERENCE.html#missing-values
 - this will also allow for missing variables for new predictions
 
-## 11. train pred model
+## 12. train pred model
 
+- used variable importance on initial random forest based on 2017 data only to filter out unimportant variables (see variable_importance.md)
 - use GRF with cluster set to h3 identifier for valid prediction CIs
-- summary of cluster sizes (min: 3; p25: 450; med: 1,336; mean: 1,750; p75: 2,468; max: 10,460)
-- save compressed grf object as `s3://geomarker/st_pm_hex/st_pm_hex_grf.qs`
+- there are 1,684 unique h3 and 17,813 total unique h3-years
+- train grf objects by year and save as `s3://geomarker/st_pm_hex/st_pm_hex_grf_{year}.qs`
 - create OOB predictions using predict without new obs and predict with new obs of same training set
-- save preds as `s3://geomarker/st_pm_hex/h3_data_grf_preds.qs`
+- save preds as `s3://geomarker/st_pm_hex/st_pm_hex_grf_preds.rds`
 
-## 12. cv error report
+## 13. cv error report
 
 - creates figures and tables for quantifying CV error in `./cv_output/` folder
 
@@ -277,7 +294,7 @@ rm aod_MCD19A2.A*
   - LOLO versus 10-fold-LLO has lower bias and variance
   - "replication error" versus "interpolation error"
 
-## 13. create Safe Harbor aggregated h3 cells
+## 14. create Safe Harbor aggregated h3 cells
 
 - same methods as for making Schwartz cells Safe Harbor Deidentified
 - used h3 resolution of 3
@@ -288,13 +305,13 @@ rm aod_MCD19A2.A*
 - 169 (23.8%) have a population less than 20,000
 - among these 169, the median population is 7,116 people (min: 0.346; max: 19,930)
 - iterative merging results in 578 geohash chunks with median population of 192,095 people (min: 20,494; max: 17,148,917)
-- list of merged geohash IDs saved as `s3://geomarker/st_pm_hex/us_h3_4_population_20k_minimum_hex_ids.rds`
+- list of merged geohash IDs saved as `s3://geomarker/st_pm_hex/us_h3_3_population_20k_minimum_hex_ids.rds`
 
+## 15. make all prediction data
 
-## 14. predicting for all h3-dates
+- function takes in `h3_5` (or hyphen separated combination of these) and outputs `h3_data/{h3_5}_h3data.qs` with all data needed for prediction (`s3://geomarker/st_pm_hex/h3_data{h3_5}_h3data.qs`)
+	
+## 16. make all predictions
 
-- 2 functions to (1) calculate prediction data and (2) predict pm
-    - both take in `h3_5` (or hyphen separated combination of these)
-    - (1) outputs `h3_data/{h3_5}_h3data.fst` with all data needed for prediction
-    - (2) outputs `h3_pm/{h3_5}_h3pm.fst` with all data needed for prediction
+- function takes in `h3_5` (or hyphen separated combination of these) and outputs `h3_pm/{h3_5}_h3pm.qs` with `date`, `h3`, `pm_pred`, and `pm_se` (`s3://geomarker/st_pm_hex/h3_pm{h3_5}_h3pm.qs`)
     

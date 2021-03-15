@@ -7,27 +7,24 @@ library(magrittr)
 
 dir.create(cv_out_folder, showWarnings = FALSE, recursive = TRUE)
 
-# make sure we have the latest OOB predictions
-## system("aws s3 cp s3://geomarker/st_pm_hex/h3_data_grf_preds.qs .")
-
 d <-
-  qs::qread("h3_data_grf_preds_equal_cluster_weights.qs") %>%
+  readRDS("st_pm_hex_grf_preds.rds") %>%
   as_tibble() %>%
-  select(date, h3, year, x, y,
-         pm25,
-         pm_pred,
-         pm_pred_se,
-         pm_pred_oob,
-         pm_pred_oob_se)
+  rename(
+    pred_inbag = pm_pred,
+    pred_oob = pm_pred_oob,
+    se_inbag = pm_pred_se,
+    se_oob = pm_pred_oob_se
+  ) %>%
+  pivot_longer(
+    cols = c(pred_inbag, pred_oob, se_inbag, se_oob),
+    names_to = c(".value", "oob"),
+    names_pattern = "(.+)_(.+)"
+  )
 
-d <- d %>%
-  rename(pred_inbag = pm_pred,
-         pred_oob = pm_pred_oob,
-         se_inbag = pm_pred_se,
-         se_oob = pm_pred_oob_se) %>%
-  pivot_longer(cols = c(pred_inbag, pred_oob, se_inbag, se_oob),
-               names_to = c(".value", "oob"),
-               names_pattern = "(.+)_(.+)")
+d_pm <- qs::qread("h3data_aqs.qs")
+
+d <- left_join(d, d_pm, by = c("date", "h3"))
 
 d <- d %>%
   mutate(lci = pred - se * qnorm(0.025, lower.tail = FALSE),
@@ -72,11 +69,14 @@ library(ggplot2)
 library(hexbin)
 library(scales)
 
+# TODO instead of bin_hex, could we just randomly sample some points?
+
 ggplot(d, aes(pm25, pred)) +
-  stat_bin_hex(binwidth = c(log10(1.065), log10(1.065)))+
+  stat_bin_hex(binwidth = c(1, 1))+
   viridis::scale_fill_viridis(option = "C", name = "Count") +
   geom_abline(slope = 1, intercept = 0, lty = 2, alpha = 0.8, color = "darkgrey") +
-  scale_x_log10(limits = c(1, 650)) + scale_y_log10(limits = c(1, 650)) +
+  xlim(c(0, 200)) + ylim(c(0, 200)) +
+  ## scale_x_log10(limits = c(1, 650)) + scale_y_log10(limits = c(1, 650)) +
   xlab(expression(Observed ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
   ylab(expression(Predicted ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
   CB::theme_cb() +
@@ -86,9 +86,9 @@ ggplot(d, aes(pm25, pred)) +
 ggsave(glue::glue("{cv_out_folder}/pred_versus_obs_plot.pdf"), width = 12, height = 6)
 
 ggplot(d, aes(pred - pm25, ci_length)) +
-  stat_bin_hex(binwidth = c(1, 1))+
-  viridis::scale_fill_viridis(option = "C", name = "Count") +
-  xlim(-100, 50)+ ylim(0, 300) +
+  stat_bin_hex(binwidth = c(0.1, 0.1))+
+  viridis::scale_fill_viridis(option = "D", name = "Count") +
+  xlim(-25, 25)+ ylim(0, 50) +
   xlab(expression(Residual ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
   ylab("Length of 95% CI") +
   CB::theme_cb() +
@@ -290,4 +290,4 @@ d_map %>%
     labs(fill = expression(paste(MAE~(ug/m^3)))) +
     guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5))
 
-ggsave(glue::glue("{cv_out_folder}/cv_maps_panel_2.pdf"), width = 12, height = 12)
+ggsave(glue::glue("{cv_out_folder}/cv_maps_panel_2.pdf"), width = 14, height = 6)
