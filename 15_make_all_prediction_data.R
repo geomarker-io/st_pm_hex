@@ -44,7 +44,20 @@ d_nei_county <- readRDS("nei_county_pm25.rds") %>%
   rename(county_fips = fips) %>%
   as.data.table(key = c("county_fips", "year"))
 
-nearby_pm <- readRDS("d_nearby_pm.rds")
+d_nei_point_year_list <-
+  readRDS("nei_point_pm25.rds") %>%
+  sf::st_as_sf() %>%
+  sf::st_transform(5072) %>%
+  mutate(nei_year = as.character(nei_year)) %>%
+  split(., .$nei_year) %>%
+  purrr::map(sf::st_union)
+
+d_aod <- fst::read_fst("h3data_aod.fst", as.data.table = TRUE)
+
+nearby_pm <-
+  readRDS("nearby_pm.rds") %>%
+  rename(h3_3 = h3) %>%
+  as.data.table()
 
 d_pop <-
   readRDS("us_h3_5_population.rds") %>%
@@ -79,7 +92,34 @@ cincinnati_h3_6s <- c(
 ## TODO fix bug where outname is misread when using geohash combo with hyphens
 
 # data we need to make predictions:
-# nearby_pm25, narr, doy, x, y, population density, nei event and nonpoint
+# nearby_pm25, narr, doy, dow, x, y, population density, nei event and nonpoint, nei_dist, nlcd, holiday
+
+pred_names <- c(
+  "nearby_pm",
+  "x",
+  "hpbl",
+  "doy",
+  "air.2m",
+  "nei_event",
+  "vwnd.10m",
+  "y",
+  "rhum.2m",
+  "pres.sfc",
+  "vis",
+  "population_density",
+  "nei_nonroad",
+  "uwnd.10m",
+  "impervious",
+  "holiday",
+  "nei_dist",
+  "green",
+  "nonimpervious",
+  "aod",
+  "nonroad_urban",
+  "prate",
+  "dow"
+)
+
 
 create_training_data <-
   function(the_geohash = cincinnati_h3_6s[1], force = FALSE) {
@@ -116,27 +156,108 @@ create_training_data <-
       raster::cellFromXY(r_narr_empty, .)
     
     d_points$h3_5 <- purrr::map_chr(d_points$h3, h3::h3_to_parent, res = 5)
-
     d_points <- left_join(d_points, d_pop, by = "h3_5")
+    d_points$h3_5 <- NULL
 
-    d <-
-      expand_grid(
-        date = seq.Date(as.Date("2000-01-01"), as.Date("2020-12-31"), by = 1),
-        h3 = children_geohashes
+    d_points$h3_3 <- purrr::map_chr(d_points$h3, h3::h3_to_parent, res = 3)
+
+    get_nei_dists <- function(the_locs, nei_year) {
+      mappp::mappp(
+        seq_len(nrow(d_points)),
+        ~ sf::st_distance(d_points[., ], d_nei_point_year_list[[nei_year]]),
+        parallel = TRUE,
+        num.cores = min(48, parallel::detectCores())
+      ) %>%
+        unlist()
+    }
+
+    d_points$nei_dist.2008 <- get_nei_dists(d_points, "2008")
+    d_points$nei_dist.2011 <- get_nei_dists(d_points, "2011")
+    d_points$nei_dist.2014 <- get_nei_dists(d_points, "2014")
+    d_points$nei_dist.2017 <- get_nei_dists(d_points, "2017")
+
+    d_points_year <-
+      d_points %>%
+      sf::st_drop_geometry() %>%
+      as_tibble() %>%
+      pivot_longer(
+        cols = c(starts_with("nei_dist")),
+        names_to = c("foo", "nei_year"), values_to = "nei_dist",
+        names_sep = "[.]"
+      ) %>%
+      select(-foo) %>%
+      left_join(year_nei_year, by = "nei_year") %>%
+      as.data.table()
+
+    d_polygons <-
+      children_geohashes %>%
+      h3::h3_to_geo_boundary_sf() %>%
+      st_transform(5072) %>%
+      mutate(h3 = children_geohashes)
+
+    d_polygons_nlcd_data <-
+      mappp::mappp(
+        seq_len(nrow(d_polygons)),
+        ~ addNlcdData::get_nlcd_data_polygons(d_polygons[., ]),
+        parallel = TRUE,
+        num.cores = min(48, parallel::detectCores())
       )
 
-    d <- left_join(d, sf::st_drop_geometry(d_points), by = "h3")
+    year_nlcd_year <-
+      tribble(
+        ~nlcd_year, ~year,
+        "2001", as.character(2000:2003),
+        "2006", as.character(2004:2008),
+        "2011", as.character(2009:2013),
+        "2016", as.character(2014:2020)
+      ) %>%
+      unnest(cols = c(year))
+
+    d_nlcd <-
+      d_polygons_nlcd_data[!is.na(d_polygons_nlcd_data)] %>%
+      purrr::map_dfr(st_drop_geometry) %>%
+      rename(nlcd_year = year) %>%
+      left_join(year_nlcd_year, ., by = "nlcd_year") %>%
+      as.data.table()
     
-    d <- left_join(d, nearby_pm, by = c("h3_5", "date"))
-    d$h3_5 <- NULL
+    d <-
+      expand_grid(
+        h3 = children_geohashes,
+        date = seq.Date(as.Date("2000-01-01"), as.Date("2020-12-31"), by = 1)
+      )
 
     d <- d %>%
       mutate(
         year = as.character(lubridate::year(date)),
-        doy = lubridate::yday(date)
+        dow = as.character(lubridate::wday(date)),
+        doy = as.character(lubridate::yday(date))
       )
 
-    d <- as.data.table(d, key = "year")
+    d <- as.data.table(d, key = c("h3", "date", "year"))
+
+    d <- merge(d, d_points_year, by = c("h3", "year"), allow.cartesian = TRUE)
+    d$nei_year <- NULL
+
+    d <- merge(d, d_nlcd, by = c("h3", "year"), allow.cartesian = TRUE)
+    d$nlcd_year <- NULL
+
+    d <- merge(d, nearby_pm, by = c("h3_3", "date"))
+    d$h3_3 <- NULL
+
+    major_holidays <- function(years) {
+      out <- c(
+        timeDate::USNewYearsDay(years),
+        timeDate::USIndependenceDay(years),
+        timeDate::USThanksgivingDay(years),
+        timeDate::USChristmasDay(years),
+        timeDate::USLaborDay(years),
+        timeDate::USMLKingsBirthday(years),
+        timeDate::USMemorialDay(years)
+      )
+      as.Date(out)
+    }
+
+    d$holiday <- d$date %in% major_holidays(2000:2020)
 
     d[d_nei_county, nei_nonpoint := i.nonpoint, on = c("county_fips", "year")]
     d[d_nei_county, nei_event := i.event, on = c("county_fips", "year")]
@@ -161,6 +282,10 @@ create_training_data <-
     d[d_for_narr, rhum.2m := i.rhum.2m, on = c("narr_cell", "date")]
     d[d_for_narr, pres.sfc := i.pres.sfc, on = c("narr_cell", "date")]
 
+    # merge in aod
+    d[d_aod, aod := i.aod, on = c("h3", "date")]
+    d[d$aod > 2, "aod"] <- NA
+
     fs::dir_create("h3_data")
     qs::qsave(d, out_name, nthreads = parallel::detectCores())
     system(glue::glue("aws s3 cp {out_name} s3://geomarker/st_pm_hex/{out_name}"))
@@ -170,13 +295,13 @@ create_training_data <-
   }
 
 
-## tictoc::tic()
-## create_training_data(cincinnati_h3_6s[1])
-## tictoc::toc()
+tictoc::tic()
+create_training_data(cincinnati_h3_6s[1])
+tictoc::toc()
+
+purrr::walk(cincinnati_h3_6s, create_training_data)
 
 create_training_data(safe_harbor_h3[515])
 create_training_data(safe_harbor_h3[573])
-
-purrr::walk(cincinnati_h3_6s, create_training_data)
 
 purrr::walk(safe_harbor_h3, create_training_data)

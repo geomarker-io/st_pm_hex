@@ -13,20 +13,29 @@ cincinnati_h3_6s <- c(
 )
 
 pred_names <- c(
-  "nearby_pm25",
+  "nearby_pm",
+  "x",
   "hpbl",
   "doy",
-  "vwnd.10m",
   "air.2m",
-  "x",
-  "vis",
-  "pres.sfc",
-  "y",
   "nei_event",
-  "population_density",
+  "vwnd.10m",
+  "y",
   "rhum.2m",
-  "nei_nonpoint",
-  "uwnd.10m"
+  "pres.sfc",
+  "vis",
+  "population_density",
+  "nei_nonroad",
+  "uwnd.10m",
+  "impervious",
+  "holiday",
+  "nei_dist",
+  "green",
+  "nonimpervious",
+  "aod",
+  "nonroad_urban",
+  "prate",
+  "dow"
 )
 
 create_predictions <-
@@ -54,6 +63,7 @@ create_predictions <-
 
     read_in_forest_and_predict <- function(yr) {
       message(yr)
+      tictoc::tic()
       grf <- qs::qread(glue::glue("st_pm_hex_grf_{yr}.qs"), nthreads = parallel::detectCores())
       d_pred <- filter(d, year == yr) %>%
         pull(data) %>%
@@ -69,6 +79,7 @@ create_predictions <-
       d_out <- mutate_at(d_out, vars(starts_with("pm_")), signif, digits = 4)
       d_out$h3 <- d_pred$h3
       d_out$date <- d_pred$date
+      tictoc::toc()
       return(d_out)
     }
 
