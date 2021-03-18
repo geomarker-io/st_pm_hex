@@ -1,5 +1,11 @@
 ## variable importance for 2017
 
+variable importance in the grf package is:
+
+> A simple weighted sum of how many times feature i was split on at each depth in the forest.
+
+decay exponent controls how much weight split depth has; max depth of 4
+
 2017 MAE before taking variables out: 0.9697 
 
 | var_imp|variable           |
@@ -107,3 +113,72 @@ MAE after removing `nei_point` and below: 0.9566
 |  0.0009|nonroad_urban      |
 |  0.0008|prate              |
 |  0.0001|dow                |
+
+MAE after running above set again: 0.9576
+
+| var_imp|variable           |
+|-------:|:------------------|
+|  0.6097|nearby_pm          |
+|  0.1573|x                  |
+|  0.0692|hpbl               |
+|  0.0435|doy                |
+|  0.0291|air.2m             |
+|  0.0273|nei_event          |
+|  0.0146|vwnd.10m           |
+|  0.0138|y                  |
+|  0.0091|rhum.2m            |
+|  0.0049|vis                |
+|  0.0047|pres.sfc           |
+|  0.0030|uwnd.10m           |
+|  0.0024|nei_nonroad        |
+|  0.0020|population_density |
+|  0.0017|impervious         |
+|  0.0015|holiday            |
+|  0.0015|nei_dist           |
+|  0.0010|green              |
+|  0.0010|nonimpervious      |
+|  0.0009|nonroad_urban      |
+|  0.0008|aod                |
+|  0.0007|prate              |
+|  0.0001|dow                |
+
+MAE after cutting below population density: 0.9257
+
+| var_imp|variable           |
+|-------:|:------------------|
+|  0.8878|nearby_pm          |
+|  0.0584|x                  |
+|  0.0144|hpbl               |
+|  0.0108|air.2m             |
+|  0.0080|nei_event          |
+|  0.0063|doy                |
+|  0.0049|y                  |
+|  0.0033|vwnd.10m           |
+|  0.0022|rhum.2m            |
+|  0.0013|vis                |
+|  0.0013|pres.sfc           |
+|  0.0011|population_density |
+|  0.0001|uwnd.10m           |
+|  0.0001|nei_nonroad        |
+
+MAE after running with only nearby_pm, x, hpbl, doy, air.2m, nei_event, vwnd.10m, y: 0.8989
+
+ var_imp|variable  |
+|-------:|:---------|
+|  0.9891|nearby_pm |
+|  0.0053|x         |
+|  0.0019|doy       |
+|  0.0013|air.2m    |
+|  0.0009|nei_event |
+|  0.0008|hpbl      |
+|  0.0005|y         |
+|  0.0003|vwnd.10m  |
+
+## overall results
+
+| n_var | mae |
+|-----:|:-----|
+| 41 | 0.970 |
+| 28 | 0.965 |
+| 14 | 0.926 |
+| 8  | 0.899 |  
