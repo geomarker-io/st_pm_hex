@@ -80,17 +80,17 @@ cincinnati_h3_6s <- c(
 # nearby_pm, doy, x, y, nei_event, narr
 
 create_training_data <-
-  function(the_geohash = cincinnati_h3_6s[1], force = FALSE) {
+  function(the_geohash = safe_harbor_h3[515], force = FALSE) {
 
-    if (stringr::str_detect(the_geohash, stringr::fixed("-"))) {
-      the_geohash <- stringr::str_split(the_geohash, stringr::fixed("-"), simplify = FALSE)[[1]]
-    }
-
-    out_name <- glue::glue("h3_data/{paste(the_geohash, sep = '-')}_h3data.qs")
+    out_name <- glue::glue("h3_data/{the_geohash}_h3data.qs")
 
     if (fs::file_exists(out_name) & !force) {
       message(out_name, " already exists")
       return(invisible(NULL))
+    }
+
+    if (stringr::str_detect(the_geohash, stringr::fixed("-"))) {
+      the_geohash <- stringr::str_split(the_geohash, stringr::fixed("-"), simplify = FALSE)[[1]]
     }
 
     children_geohashes <- unlist(purrr::map(the_geohash, h3::h3_to_children, res = 8))
@@ -167,7 +167,9 @@ tictoc::toc()
 
 purrr::walk(cincinnati_h3_6s, create_training_data)
 
+tictoc::tic()
 create_training_data(safe_harbor_h3[515])
+tictoc::toc()
 create_training_data(safe_harbor_h3[573])
 
 purrr::walk(safe_harbor_h3, create_training_data)
