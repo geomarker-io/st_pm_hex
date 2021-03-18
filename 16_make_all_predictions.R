@@ -64,7 +64,7 @@ create_predictions <-
     read_in_forest_and_predict <- function(yr) {
       message(yr)
       tictoc::tic()
-      grf <- qs::qread(glue::glue("st_pm_hex_grf_{yr}.qs"), nthreads = parallel::detectCores())
+      grf <- qs::qread(glue::glue("grf/st_pm_hex_grf_{yr}.qs"), nthreads = parallel::detectCores())
       d_pred <- filter(d, year == yr) %>%
         pull(data) %>%
         .[[1]]

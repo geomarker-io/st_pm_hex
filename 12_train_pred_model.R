@@ -100,15 +100,17 @@ train_and_save_grf <- function(yr) {
   ## knitr::kable(arrange(vi, desc(var_imp)))
   ## median(abs(grf$predictions - grf$Y.orig))
 
+  fs::dir_create("grf")
+
   qs::qsave(grf,
-    glue::glue("st_pm_hex_grf_{yr}.qs"),
+    glue::glue("grf/st_pm_hex_grf_{yr}.qs"),
     nthreads = parallel::detectCores()
   )
 
   system(glue::glue(
     "aws s3 cp ",
-    "st_pm_hex_grf_{yr}.qs ",
-    "s3://geomarker/st_pm_hex/st_pm_hex_grf_{yr}.qs"
+    "grf/st_pm_hex_grf_{yr}.qs ",
+    "s3://geomarker/st_pm_hex/grf/st_pm_hex_grf_{yr}.qs"
   ))
 
   grf_preds_oob <- predict(grf, estimate.variance = TRUE)
@@ -129,7 +131,7 @@ train_and_save_grf <- function(yr) {
     mutate_at(vars(starts_with("pm_pred_")), signif, digits = 4)
 
   qs::qsave(d_out,
-    glue::glue("st_pm_hex_grf_preds_{yr}.qs"),
+    glue::glue("grf/st_pm_hex_grf_preds_{yr}.qs"),
     nthreads = parallel::detectCores()
   )
 }
@@ -138,10 +140,10 @@ purrr::walk(2000:2020, train_and_save_grf)
 
 ## collect all predictions, combine, upload
 
-purrr::map(2000:2020, ~ qs::qread(paste0("st_pm_hex_grf_preds_", ., ".qs"))) %>%
+purrr::map(2000:2020, ~ qs::qread(paste0("grf/st_pm_hex_grf_preds_", ., ".qs"))) %>%
   set_names(2000:2020) %>%
   tibble::enframe(name = "year", value = "data") %>%
   unnest(cols = c(data)) %>%
-  saveRDS("st_pm_hex_grf_preds.rds")
+  saveRDS("grf/st_pm_hex_grf_preds.rds")
 
-system("aws s3 cp st_pm_hex_grf_preds.rds s3://geomarker/st_pm_hex/st_pm_hex_grf_preds.rds")
+system("aws s3 cp grf/st_pm_hex_grf_preds.rds s3://geomarker/st_pm_hex/grf/st_pm_hex_grf_preds.rds")

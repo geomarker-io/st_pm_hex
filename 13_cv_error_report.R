@@ -8,7 +8,7 @@ library(magrittr)
 dir.create(cv_out_folder, showWarnings = FALSE, recursive = TRUE)
 
 d <-
-  readRDS("st_pm_hex_grf_preds.rds") %>%
+  readRDS("grf/st_pm_hex_grf_preds.rds") %>%
   as_tibble() %>%
   rename(
     pred_inbag = pm_pred,
