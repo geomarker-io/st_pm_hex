@@ -1206,6 +1206,13 @@
       "Repository": "CRAN",
       "Hash": "71dffd8544691c520dd8e41ed2d7e070"
     },
+    "tictoc": {
+      "Package": "tictoc",
+      "Version": "1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "f8cc5adf4671b013434bbe127f35b28c"
+    },
     "tidycensus": {
       "Package": "tidycensus",
       "Version": "0.10.2",
