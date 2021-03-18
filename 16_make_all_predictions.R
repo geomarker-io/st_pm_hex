@@ -15,27 +15,12 @@ cincinnati_h3_6s <- c(
 pred_names <- c(
   "nearby_pm",
   "x",
-  "hpbl",
   "doy",
   "air.2m",
   "nei_event",
-  "vwnd.10m",
+  "hpbl",
   "y",
-  "rhum.2m",
-  "pres.sfc",
-  "vis",
-  "population_density",
-  "nei_nonroad",
-  "uwnd.10m",
-  "impervious",
-  "holiday",
-  "nei_dist",
-  "green",
-  "nonimpervious",
-  "aod",
-  "nonroad_urban",
-  "prate",
-  "dow"
+  "vwnd.10m"
 )
 
 create_predictions <-

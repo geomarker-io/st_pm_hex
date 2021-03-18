@@ -7,7 +7,7 @@ library(grf)
 
 set.seed(224)
 
-pred_names <- c(
+all_pred_names <- c(
   "population_density",
   "year",
   "doy", "dow",
@@ -32,27 +32,12 @@ pred_names <- c(
 pred_names <- c(
   "nearby_pm",
   "x",
-  "hpbl",
   "doy",
-  "nei_event",
-  "vwnd.10m",
   "air.2m",
-  "rhum.2m",
+  "nei_event",
+  "hpbl",
   "y",
-  "vis",
-  "nei_nonroad",
-  "uwnd.10m",
-  "pres.sfc",
-  "population_density",
-  "nei_dist",
-  "prate",
-  "green",
-  "holiday",
-  "impervious",
-  "nonimpervious",
-  "nonroad_urban",
-  "dow",
-  "aod"
+  "vwnd.10m"
 )
 
 # make forests for all years using selected variables
