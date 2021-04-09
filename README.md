@@ -118,8 +118,7 @@ d <-
   - 75p: 567.5
   - max: 1012
 - aggregate data to h3 resolution 3 (see `h3_3_and_aqs_map.html` for measurement location with dot size by number of total days with measurements *and* all h5 resolution 3 polygons)
-- create `nearby_pm` as mean of yesterday, today, and tomorrow for each h3_5 cell
-- average all `nearby_pm` values for each polygon and date including the k-ring of polygons around it
+- average all "nearby" pm2.5 values for each polygon and date including the k-ring with radius 5 of polygons around it
 - create "nearby pm2.5" column (`nearby_pm`) as mean of means of yesterday, today, and tomorrow for each "res 5" h3 region (this data saved as `s3://geomarker/st_pm_hex/nearby_pm.rds`)
 
 ## 4. get NLCD data
@@ -313,5 +312,7 @@ rm aod_MCD19A2.A*
 	
 ## 16. make all predictions
 
-- function takes in `h3_5` (or hyphen separated combination of these) and outputs `h3_pm/{h3_5}_h3pm.qs` with `date`, `h3`, `pm_pred`, and `pm_se` (`s3://geomarker/st_pm_hex/h3_pm{h3_5}_h3pm.qs`)
+- function takes in `h3_5` (or hyphen separated combination of these) and outputs one prediction file per year, `h3_pm/{h3_5}_{year}_h3pm.fst` with `date`, `h3`, `pm_pred`, and `pm_se` (`s3://geomarker/st_pm_hex/h3_pm{h3_5}_h3pm.qs`)
+- these can be read in with `fst::fst_read(..., as.data.table = TRUE)` to utilize them as data.table objects, with the keys precalculated on `h3` and `date`
+- one file size (with no aggregated chunks) is about 20 MB on disk and 200 MB in RAM
     

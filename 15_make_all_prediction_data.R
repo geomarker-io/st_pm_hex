@@ -161,15 +161,15 @@ create_training_data <-
   }
 
 
-tictoc::tic()
-create_training_data(cincinnati_h3_6s[1])
-tictoc::toc()
+## tictoc::tic()
+## create_training_data(cincinnati_h3_6s[1])
+## tictoc::toc()
 
-purrr::walk(cincinnati_h3_6s, create_training_data)
+## purrr::walk(cincinnati_h3_6s, create_training_data)
 
-tictoc::tic()
-create_training_data(safe_harbor_h3[515])
-tictoc::toc()
-create_training_data(safe_harbor_h3[573])
+## tictoc::tic()
+## create_training_data(safe_harbor_h3[515])
+## tictoc::toc()
+## create_training_data(safe_harbor_h3[573])
 
 purrr::walk(safe_harbor_h3, create_training_data)
