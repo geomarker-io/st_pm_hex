@@ -136,6 +136,8 @@ d <-
   - create moving three day average
 - create "nearby pm2.5" column (`nearby_pm`) (this data saved as `s3://geomarker/st_pm_hex/nearby_pm.rds`)
 
+![](./h3_3_and_aqs_map_screenshot.png)
+  
 ### 4. get NLCD data
 
 - National Land Cover Database information is taken from the [geomarker-io/addNlcdData](https://github.com/geomarker-io/addNlcdData) R package that uses `.fst` files to speed up extraction and summary for polygons
