@@ -64,37 +64,70 @@ d %>%
   knitr::kable(digits = 2) %>%
   cat(file = glue::glue("{cv_out_folder}/cv_accuracy_overall.md"), sep = "\n")
 
+#' describe lengths of confidence intervals
+summary(d$ci_length)
+summary(d$ci_length / d$pred)
+
 #' plot overall obs versus oob predicted
 library(ggplot2)
 library(hexbin)
 library(scales)
 
-# TODO instead of bin_hex, could we just randomly sample some points?
-
-ggplot(d, aes(pm25, pred)) +
-  stat_bin_hex(binwidth = c(1, 1))+
+d %>%
+  filter(oob == "oob") %>%
+  ggplot(aes(pm25, pred)) +
+  stat_bin_hex(binwidth = c(0.33, 0.33))+
   viridis::scale_fill_viridis(option = "C", name = "Count") +
   geom_abline(slope = 1, intercept = 0, lty = 2, alpha = 0.8, color = "darkgrey") +
-  xlim(c(0, 200)) + ylim(c(0, 200)) +
+  xlim(c(0, 75)) + ylim(c(0, 75)) +
+  ## scale_x_log10(limits = c(1, 650)) + scale_y_log10(limits = c(1, 650)) +
+  xlab(expression(Observed ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
+  ylab(expression(CV ~ Predicted ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
+  CB::theme_cb() +
+  coord_fixed()
+
+ggsave(glue::glue("{cv_out_folder}/oob_pred_versus_obs_plot.pdf"), width = 6, height = 6)
+
+d %>%
+  filter(oob == "oob") %>%
+  ggplot(aes(pm25, pred)) +
+  stat_bin_hex(binwidth = c(0.33, 0.33))+
+  viridis::scale_fill_viridis(option = "C", name = "Count") +
+  geom_abline(slope = 1, intercept = 0, lty = 2, alpha = 0.8, color = "darkgrey") +
+  xlim(c(0, 15)) + ylim(c(0, 15)) +
+  ## scale_x_log10(limits = c(1, 650)) + scale_y_log10(limits = c(1, 650)) +
+  xlab(expression(Observed ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
+  ylab(expression(CV ~ Predicted ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
+  CB::theme_cb() +
+  coord_fixed()
+
+ggsave(glue::glue("{cv_out_folder}/oob_pred_versus_obs_plot_zoomed.pdf"), width = 6, height = 6)
+
+ggplot(d, aes(pm25, pred)) +
+  stat_bin_hex(binwidth = c(0.2, 0.2))+
+  viridis::scale_fill_viridis(option = "C", name = "Count") +
+  geom_abline(slope = 1, intercept = 0, lty = 2, alpha = 0.8, color = "darkgrey") +
+  xlim(c(0, 100)) + ylim(c(0, 100)) +
   ## scale_x_log10(limits = c(1, 650)) + scale_y_log10(limits = c(1, 650)) +
   xlab(expression(Observed ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
   ylab(expression(Predicted ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
   CB::theme_cb() +
-  facet_wrap(~oob) +
+  facet_grid(oob~year) +
   coord_fixed()
 
-ggsave(glue::glue("{cv_out_folder}/pred_versus_obs_plot.pdf"), width = 12, height = 6)
+ggsave(glue::glue("{cv_out_folder}/pred_versus_obs_plot_by_year.pdf"), width = 48, height = 6)
 
-ggplot(d, aes(pred - pm25, ci_length)) +
-  stat_bin_hex(binwidth = c(0.1, 0.1))+
-  viridis::scale_fill_viridis(option = "D", name = "Count") +
-  xlim(-25, 25)+ ylim(0, 50) +
+d %>%
+  filter(oob == "oob") %>%
+  sample_n(1000) %>%
+  ggplot(aes(pred - pm25, ci_length)) +
+  geom_point() +
+  xlim(-10, 10)+ ylim(0, 30) +
   xlab(expression(Residual ~ paste(PM[2.5], " (", mu, "g/", m^{3}, ") "))) +
   ylab("Length of 95% CI") +
-  CB::theme_cb() +
-  facet_wrap(~oob)
+  CB::theme_cb()
 
-ggsave(glue::glue("{cv_out_folder}/resid_versus_ci_length_plot.pdf"), width = 12, height = 6)
+ggsave(glue::glue("{cv_out_folder}/oob_resid_versus_ci_length_plot.pdf"), width = 12, height = 6)
 
 #' for each site, generate predictions for daily pm2.5 and averages for week, month, year, and and entire time period
 
@@ -210,21 +243,28 @@ d_temporal_cv %>%
 
 #' boxplot these too
 
-ggplot(d_temporal_cv, aes(time, mae, fill = oob)) +
+d_temporal_cv %>%
+  filter(oob == "oob") %>%
+  ggplot(aes(time, mae)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("oob" = "#9E4679", "inbag" = "#76BC44")) +
-  CB::theme_cb()
+  CB::theme_cb() +
+  ylab(expression(paste(CV~MAE~(ug/m^3)))) +
+  xlab("Temporal Aggregation Window")
 
 ggsave(glue::glue("{cv_out_folder}/cv_boxplot_mae.pdf"))
 
-ggplot(d_temporal_cv, aes(time, rsq, fill = oob)) +
+d_temporal_cv %>%
+  filter(oob == "oob") %>%
+  ggplot(aes(time, rsq)) +
   geom_boxplot() +
-  scale_fill_manual(values = c("oob" = "#9E4679", "inbag" = "#76BC44")) +
-  CB::theme_cb()
+  CB::theme_cb() +
+  ylab(expression(paste(CV~R^2))) +
+  xlab("Temporal Aggregation Window")
 
 ggsave(glue::glue("{cv_out_folder}/cv_boxplot_rsq.pdf"))
 
-#' average CV by spatial region (h3 resolution level of 2)
+
+#' average CV by spatial region (h3 resolution level of 3)
 
 sp_rs <- 2
 
@@ -260,9 +300,11 @@ d_spatiotemporal_cv <-
 #' create maps by h3 region
 
 d_hex <- readRDS('us_h3_8_compact_hex_ids.rds') %>%
-    purrr::map(h3::h3_to_children, res = sp_rs) %>%
-    unlist() %>%
-    unique()
+  purrr::map(h3::h3_to_children, res = 8) %>%
+  unlist() %>%
+  purrr::map(h3::h3_to_parent, res = sp_rs) %>%
+  unlist() %>%
+  unique()
 
 d_sf <- sf::st_as_sf(h3::h3_to_geo_boundary_sf(d_hex))
 d_sf$h3 <- d_hex
@@ -271,23 +313,48 @@ d_map <- left_join(d_sf, d_spatiotemporal_cv, by = "h3")
 
 saveRDS(d_map, glue::glue("{cv_out_folder}/d_map.rds"))
 
-d_map %>%
-    filter(!is.na(time)) %>%
-    ggplot() +
-    geom_sf(aes(fill = mae), size = 0) +
-    coord_sf(crs = 5072) +
-    facet_grid(oob ~ time) +
-    CB::theme_map() +
-    scale_fill_viridis_c() +
-    theme(legend.position = c(0.76, -0.3),
-          legend.direction = "horizontal",
-          legend.title = element_text(size = 11, family = "sans"),
-          legend.text = element_text(size = 11),
-          legend.box = "hortizontal",
-          legend.key.height = unit(4, "mm"),
-          legend.key.width = unit(9, "mm"),
-          strip.text.x = element_text(size = 11, face = "bold")) +
-    labs(fill = expression(paste(MAE~(ug/m^3)))) +
-    guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5))
+library(ggplot2)
 
-ggsave(glue::glue("{cv_out_folder}/cv_maps_panel_2.pdf"), width = 14, height = 6)
+d_map %>%
+  filter(!is.na(time)) %>%
+  ggplot() +
+  geom_sf(aes(fill = mae), size = 0) +
+  coord_sf(crs = 5072) +
+  facet_grid(oob ~ time) +
+  CB::theme_map() +
+  scale_fill_viridis_c() +
+  theme(legend.position = c(0.76, -0.3),
+        legend.direction = "horizontal",
+        legend.title = element_text(size = 11, family = "sans"),
+        legend.text = element_text(size = 11),
+        legend.box = "hortizontal",
+        legend.key.height = unit(4, "mm"),
+        legend.key.width = unit(9, "mm"),
+        strip.text.x = element_text(size = 11, face = "bold", vjust = 1),
+        strip.text.y = element_text(size = 11, face = "bold")) +
+  labs(fill = expression(paste(MAE~(ug/m^3)))) +
+  guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5))
+
+ggsave(glue::glue("{cv_out_folder}/cv_and_fitted_maps_panel_2.pdf"), width = 14, height = 6)
+
+d_map %>%
+  filter(!is.na(time)) %>%
+  filter(oob == "oob") %>%
+  ggplot() +
+  geom_sf(aes(fill = mae), size = 0) +
+  coord_sf(crs = 5072) +
+  facet_wrap(~ time) +
+  CB::theme_map() +
+  scale_fill_viridis_c() +
+  theme(legend.position = c(0.85, 0.2),
+        legend.direction = "horizontal",
+        legend.title = element_text(size = 9),
+        legend.text = element_text(size = 9),
+        legend.box = "hortizontal",
+        legend.key.height = unit(4, "mm"),
+        legend.key.width = unit(9, "mm"),
+        strip.text.x = element_text(size = 9, face = "bold", vjust = 0.9)) +
+  labs(fill = expression(paste(MAE~(ug/m^3)))) +
+  guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5))
+
+ggsave(glue::glue("{cv_out_folder}/cv_maps_panel_2.pdf"), width = 6, height = 4)
