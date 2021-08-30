@@ -113,7 +113,7 @@ add_mean_CIs_and_summarize_error <- function(x) {
   x %>%
     mutate(lci = mean_pm_pred - mean_pm_se * qnorm(0.025, lower.tail = FALSE),
            uci = mean_pm_pred + mean_pm_se * qnorm(0.025, lower.tail = FALSE),
-           ci_covered = mean_pm25 < uci & mean_pm25 > lci) %>%
+           ci_covered = mean_pm25 <= uci & mean_pm25 >= lci) %>%
     group_by(h3, oob) %>%
     summarize(
       n_time_units = n(),
@@ -134,7 +134,7 @@ d_temporal_cv$all <-
     .(.N,
       mean_pm25 = mean(pm25),
       mean_pm_pred = mean(pred),
-      mean_pm_se = sqrt(sum(se^2)/(.N^2))),
+      mean_pm_se = sqrt(sum(se^2))),
     by = c("h3", "oob")
     ] %>%
   add_mean_CIs_and_summarize_error()
@@ -145,7 +145,7 @@ d_temporal_cv$annual <-
     .(.N,
       mean_pm25 = mean(pm25),
       mean_pm_pred = mean(pred),
-      mean_pm_se = sqrt(sum(se^2)/(.N^2))),
+      mean_pm_se = sqrt(sum(se^2))),
     by = c("h3", "oob", "year")
     ] %>%
   add_mean_CIs_and_summarize_error()
@@ -156,7 +156,7 @@ d_temporal_cv$monthly <-
     .(.N,
       mean_pm25 = mean(pm25),
       mean_pm_pred = mean(pred),
-      mean_pm_se = sqrt(sum(se^2)/(.N^2))),
+      mean_pm_se = sqrt(sum(se^2))),
     by = c("h3", "oob", "year", "month")
     ] %>%
   add_mean_CIs_and_summarize_error()
@@ -167,7 +167,7 @@ d_temporal_cv$weekly <-
     .(.N,
       mean_pm25 = mean(pm25),
       mean_pm_pred = mean(pred),
-      mean_pm_se = sqrt(sum(se^2)/(.N^2))),
+      mean_pm_se = sqrt(sum(se^2))),
     by = c("h3", "oob", "year", "week")
     ] %>%
   add_mean_CIs_and_summarize_error()
@@ -178,7 +178,7 @@ d_temporal_cv$daily <-
     .(.N,
       mean_pm25 = mean(pm25),
       mean_pm_pred = mean(pred),
-      mean_pm_se = sqrt(sum(se^2)/(.N^2))),
+      mean_pm_se = sqrt(sum(se^2))),
     by = c("h3", "oob", "date")
     ] %>%
   add_mean_CIs_and_summarize_error()
