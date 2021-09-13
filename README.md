@@ -4,6 +4,8 @@
 
 This repository contains the code used to create a daily, 750 sq m, spatiotemporal PM2.5 exposure assessment model for the contiguous United States from 2000 to 2020.
 	
+![st_pm_hex](st_pm_hex.png)
+
 ## Computing
 
 ### using `renv` for package management

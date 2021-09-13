@@ -271,15 +271,16 @@ sp_rs <- 2
 d_temporal_cv$h3 <- purrr::map_chr(d_temporal_cv$h3, h3::h3_to_parent, res = sp_rs)
 
 d_spatiotemporal_cv <-
-    d_temporal_cv %>%
-    group_by(time, h3, oob) %>%
-    summarise(
-        n = median(n_time_units, na.rm = TRUE),
-        mae = median(mae, na.rm = TRUE),
-        rmse = median(rmse, na.rm = TRUE),
-        rsq = median(rsq, na.rm = TRUE),
-        slope = median(slope, na.rm = TRUE)
-    )
+  d_temporal_cv %>%
+  group_by(time, h3, oob) %>%
+  summarise(
+    n = median(n_time_units, na.rm = TRUE),
+    mae = median(mae, na.rm = TRUE),
+    rmse = median(rmse, na.rm = TRUE),
+    rsq = median(rsq, na.rm = TRUE),
+    slope = median(slope, na.rm = TRUE),
+    ci_coverage = median(as.numeric(sub("%", "", ci_coverage)), na.rm = TRUE),
+  )
 
 ## d_spatiotemporal_cv %>%
 ##   pivot_wider(names_from = time, values_from = c(N, mae, rmse, rsq)) %>%
