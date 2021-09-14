@@ -6,6 +6,12 @@ This repository contains the code used to create a daily, 750 sq m, spatiotempor
 	
 ![st_pm_hex](st_pm_hex.png)
 
+If you are looking to use predictions from this model, please check out:
+
+- the preprint scientific manuscript: https://doi.org/10.20944/preprints202109.0164.v1
+- the R package for attaching PM2.5 estimates given lat/lon and date range: https://geomarker.io/addPmData
+- the [DeGAUSS](https://degauss.org) container attaching PM2.5 estimates given lat/lon and date range: https://degauss.org/pm
+
 ## Computing
 
 ### using `renv` for package management
