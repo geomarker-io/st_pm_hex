@@ -8,7 +8,7 @@ This repository contains the code used to create a daily, 750 sq m, spatiotempor
 
 If you are looking to use predictions from this model, please check out:
 
-- the preprint scientific manuscript: https://doi.org/10.20944/preprints202109.0164.v1
+- manuscript describing model development: `Brokamp, C. A High Resolution Spatiotemporal Fine Particulate Matter Exposure Assessment Model for the Contiguous United States. Environmental Advances. In Press. 2021.` (accepted preprint available online: [https://doi.org/10.1016/j.envadv.2021.100155](https://doi.org/10.1016/j.envadv.2021.100155))
 - the R package for attaching PM2.5 estimates given lat/lon and date range: https://geomarker.io/addPmData
 - the [DeGAUSS](https://degauss.org) container attaching PM2.5 estimates given lat/lon and date range: https://degauss.org/pm
 
