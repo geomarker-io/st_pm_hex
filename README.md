@@ -301,4 +301,5 @@ rm aod_MCD19A2.A*
 - function takes in `h3_5` (or hyphen separated combination of these) and outputs one prediction file per year, `h3_pm/{h3_5}_{year}_h3pm.fst` with `date`, `h3`, `pm_pred`, and `pm_se` (`s3://geomarker/st_pm_hex/h3_pm{h3_5}_h3pm.qs`)
 - these can be read in with `fst::fst_read(..., as.data.table = TRUE)` to utilize them as data.table objects, with the keys precalculated on `h3` and `date`
 - one file size (with no aggregated chunks) is about 20 MB on disk and 200 MB in RAM
+- the folder `st_pm_hex_big_predict` contains a script for predicting all where the Safe Harbor chunk is very large and requires more parallelization to compute on a feasible amount of available RAM (200 GB)
     

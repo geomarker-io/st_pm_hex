@@ -51,7 +51,7 @@ d %>%
   cat(file = glue::glue("{cv_out_folder}/measured_pm_summary.md"), sep = "\n")
 
 
-#' individual prediction errors
+#' daily prediction errors overall
 d %>%
   group_by(oob) %>%
   summarize(
@@ -63,6 +63,19 @@ d %>%
   ) %>%
   knitr::kable(digits = 2) %>%
   cat(file = glue::glue("{cv_out_folder}/cv_accuracy_overall.md"), sep = "\n")
+
+#' annual summaries of model performance, and PM2.5 measurements
+d %>%
+  filter(oob == "oob") %>%
+  group_by(year) %>%
+  summarize(
+    n = n(),
+    mean_measured_pm = mean(pm25),
+    mae = median(abs(pm25 - pred)),
+    rsq = cor(pm25, pred, use = "pairwise.complete")^2
+  ) %>%
+  knitr::kable(digits = 2) %>%
+  cat(file = glue::glue("{cv_out_folder}/cv_accuracy_by_year.md"), sep = "\n")
 
 #' describe lengths of confidence intervals
 summary(d$ci_length)
