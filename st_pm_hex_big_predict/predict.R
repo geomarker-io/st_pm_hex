@@ -33,10 +33,10 @@ safe_s3_check <- function(h3 = big_safe_harbor_h3[5]) {
 predict_all_for_a_geohash <- function(the_geohash = big_safe_harbor_h3[15], super_small = FALSE) {
   in_name <- glue::glue("h3_data/{the_geohash}_h3data.qs")
 
-  ## if (safe_s3_check(the_geohash)) {
-  ##   message(glue::glue("seems like all years for {the_geohash} are already available"))
-  ##   return(invisible(NULL))
-  ## }
+  if (safe_s3_check(the_geohash)) {
+    message(glue::glue("seems like all years for {the_geohash} are already available"))
+    return(invisible(NULL))
+  }
 
   if (!fs::file_exists(in_name)) {
     fs::dir_create("h3_data")
@@ -100,7 +100,7 @@ predict_all_for_a_geohash <- function(the_geohash = big_safe_harbor_h3[15], supe
       )
 
     fst::write_fst(d_pred_out, out_name, compress = 100)
-    system(glue::glue("aws s3 cp {out_name} s3://pm25-brokamp/{the_geohash}_{yr}_h3pm.fst"))
+    system(glue::glue("aws s3 cp {out_name} s3://pm25-brokamp/{the_geohash}_{yr}_h3pm.fst --acl public-read"))
   }
 
   purrr::walk(as.character(2000:2020), predict_all_for_a_year)
@@ -110,6 +110,13 @@ purrr::map_lgl(big_safe_harbor_h3, safe_s3_check)
 
 purrr::walk(big_safe_harbor_h3, predict_all_for_a_geohash)
 
+# run preds for those that are very large
 super_big_safe_harbor_h3 <- big_safe_harbor_h3[c(5, 12, 14, 15)]
-
 purrr::walk(super_big_safe_harbor_h3, predict_all_for_a_geohash, super_small = TRUE)
+
+# run preds for any that don't exist online
+purrr::walk(safe_harbor_h3[!purrr::map_lgl(safe_harbor_h3, safe_s3_check)][-1], predict_all_for_a_geohash)
+purrr::walk(rev(safe_harbor_h3[!purrr::map_lgl(safe_harbor_h3, safe_s3_check)][-1]), predict_all_for_a_geohash)
+
+purrr::walk(safe_harbor_h3[!purrr::map_lgl(safe_harbor_h3, safe_s3_check)][6:10], predict_all_for_a_geohash)
+
