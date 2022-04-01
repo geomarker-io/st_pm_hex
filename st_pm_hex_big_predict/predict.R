@@ -116,7 +116,3 @@ purrr::walk(super_big_safe_harbor_h3, predict_all_for_a_geohash, super_small = T
 
 # run preds for any that don't exist online
 purrr::walk(safe_harbor_h3[!purrr::map_lgl(safe_harbor_h3, safe_s3_check)][-1], predict_all_for_a_geohash)
-purrr::walk(rev(safe_harbor_h3[!purrr::map_lgl(safe_harbor_h3, safe_s3_check)][-1]), predict_all_for_a_geohash)
-
-purrr::walk(safe_harbor_h3[!purrr::map_lgl(safe_harbor_h3, safe_s3_check)][6:10], predict_all_for_a_geohash)
-

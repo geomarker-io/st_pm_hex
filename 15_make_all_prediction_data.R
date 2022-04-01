@@ -8,7 +8,7 @@ options(tigris_class = "sf")
 
 if (!file.exists("county_fips_contig_us_5072.rds")) {
   states_to_keep <-
-    tigris::states() %>%
+    tigris::states(year = 2019) %>%
     filter(!NAME %in% c(
     "United States Virgin Islands",
     "Guam", "Commonwealth of the Northern Mariana Islands",
@@ -62,7 +62,7 @@ r_narr_empty <-
     vals = NULL
   )
 
-safe_harbor_h3 <- readRDS("us_h3_4_population_20k_minimum_hex_ids.rds")
+safe_harbor_h3 <- readRDS("us_h3_3_population_20k_minimum_hex_ids.rds")
 
 cincinnati_h3_6s <- c(
   "832a93fffffffff",
@@ -164,6 +164,7 @@ create_training_data <-
 ## tictoc::tic()
 ## create_training_data(cincinnati_h3_6s[1])
 ## tictoc::toc()
+create_training_data(the_geohash = "83281afffffffff")
 
 ## purrr::walk(cincinnati_h3_6s, create_training_data)
 

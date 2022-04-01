@@ -113,3 +113,5 @@ strsplit(safe_harbor_h3, "-") %>%
   which() %>%
   safe_harbor_h3[.] %>%
   purrr::walk(create_predictions)
+
+create_predictions("83281afffffffff")
