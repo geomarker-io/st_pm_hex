@@ -11,6 +11,8 @@ If you are looking to use predictions from this model, please check out:
 - manuscript describing model development: `Brokamp, C. A High Resolution Spatiotemporal Fine Particulate Matter Exposure Assessment Model for the Contiguous United States. Environmental Advances. In Press. 2021.` (accepted preprint available online: [https://doi.org/10.1016/j.envadv.2021.100155](https://doi.org/10.1016/j.envadv.2021.100155))
 - the R package for attaching PM2.5 estimates given lat/lon and date range: https://geomarker.io/addPmData
 - the [DeGAUSS](https://degauss.org) container attaching PM2.5 estimates given lat/lon and date range: https://degauss.org/pm
+- an interactive [online map](http://app.geomarker.io/pm_cv_accuracy/) showing the crossvalidated accuracy metrics for specific subsets of the United States *and* the locations of all EPA monitoring stations used in the training data.
+
 
 ## Computing
 
@@ -278,6 +280,8 @@ rm aod_MCD19A2.A*
 - QD, 2019: 10-fold CV R2 = 0.86 (0.89 annual)
 - Hu, 2017: 10-fold CV R2 = 0.84
 - QD, 2016: 10-fold CV R2 = 0.80
+
+See separately, an interactive [online map](http://app.geomarker.io/pm_cv_accuracy/) showing the crossvalidated accuracy metrics for specific subsets of the United States *and* the locations of all EPA monitoring stations used in the training data.
 
 ### 14. create Safe Harbor aggregated h3 cells
 
